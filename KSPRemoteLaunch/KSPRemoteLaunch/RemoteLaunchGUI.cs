@@ -89,7 +89,26 @@ namespace KSPRemoteLaunch
 
         }
 
+        void Update()
+        {
+            if (Input.GetKeyDown("l"))
+            {
+                LogDebugOnly("KeyDown event detected for 'l' ");
+                if (windowActive)
+                {
+                    RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
+                    windowActive = false;
+                }
+                else
+                {
+                    RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//start the GUI
+                    windowActive = true;
+                }
 
+            }
+
+
+        }
 
 
         void onDestroy()
