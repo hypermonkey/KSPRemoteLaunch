@@ -13,8 +13,10 @@ namespace KSPRemoteLaunch
         protected Rect windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
         private string latText = "0.0";
         private string lonText = "0.0";
+        private string heightText = "0.5";
         private double lat = 0;
         private double lon = 0;
+        private double height = 0.5;
         private bool windowActive = false;
 
         private void WindowGUI(int windowID)
@@ -44,6 +46,11 @@ namespace KSPRemoteLaunch
             GUILayout.Label("Longitude: ", labelSty, GUILayout.ExpandWidth(true));
             lonText = GUILayout.TextField(lonText, textSty, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Height:    ", labelSty, GUILayout.ExpandWidth(true));
+            heightText = GUILayout.TextField(heightText, textSty, GUILayout.ExpandWidth(true));
+            GUILayout.EndHorizontal();
             
             if (GUILayout.Button("Log Position", buttonSty, GUILayout.ExpandWidth(true)))
             {
@@ -51,14 +58,20 @@ namespace KSPRemoteLaunch
                 {
                     lat = double.Parse(latText);
                     lon = double.Parse(lonText);
+                    height = double.Parse(heightText);
+                    LaunchDriver.SetLaunchLocation(lat, lon, height, FlightGlobals.ActiveVessel, FlightGlobals.Bodies[1]);
                     LogDebugOnly("Latitude: {0} , Longitude: {1}", lat, lon);
+                    //LaunchDriver.SetLaunchRotationToPlanetNormal(FlightGlobals.ActiveVessel);
                 }
                 catch(Exception e)
                 {
                     LogDebugOnly(e.Message);
                 }
+
+                //LaunchDriver.SetLaunchRotationToPlanetNormal(FlightGlobals.ActiveVessel);
             }
 
+            
 
             GUILayout.EndVertical();
 
