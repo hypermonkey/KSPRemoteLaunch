@@ -6,14 +6,15 @@ using UnityEngine;
 
 namespace KSPRemoteLaunch
 {
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    //[KSPAddon(KSPAddon.Startup.Flight, false)]
+    [KSPAddon(KSPAddon.Startup.EditorAny,false)]
     public class RemoteLaunchGUI:MonoBehaviourExtended
     {
         //windowPos is used to position the GUI window, lets set it in the center of the screen
         protected Rect windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
         private string latText = "0.0";
         private string lonText = "0.0";
-        private string heightText = "0.5";
+        private string launchText = "";
         private double lat = 0;
         private double lon = 0;
         private double height = 0.5;
@@ -48,8 +49,8 @@ namespace KSPRemoteLaunch
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Height:    ", labelSty, GUILayout.ExpandWidth(true));
-            heightText = GUILayout.TextField(heightText, textSty, GUILayout.ExpandWidth(true));
+            GUILayout.Label("Site Name: ", labelSty, GUILayout.ExpandWidth(true));
+            launchText = GUILayout.TextField(launchText, textSty, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
             
             if (GUILayout.Button("Log Position", buttonSty, GUILayout.ExpandWidth(true)))
@@ -58,20 +59,24 @@ namespace KSPRemoteLaunch
                 {
                     lat = double.Parse(latText);
                     lon = double.Parse(lonText);
-                    height = double.Parse(heightText);
-                    LaunchDriver.SetLaunchLocation(lat, lon, height, FlightGlobals.ActiveVessel, FlightGlobals.Bodies[1]);
+                    //height = double.Parse(heightText);//this is redundant
                     LogDebugOnly("Latitude: {0} , Longitude: {1}", lat, lon);
-                    //LaunchDriver.SetLaunchRotationToPlanetNormal(FlightGlobals.ActiveVessel);
+                    LogDebugOnly("Planet: {0}, Launch Pad: {1}", FlightGlobals.Bodies[1].name,launchText);
+                    LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText);
+                    
                 }
                 catch(Exception e)
                 {
                     LogDebugOnly(e.Message);
                 }
 
-                //LaunchDriver.SetLaunchRotationToPlanetNormal(FlightGlobals.ActiveVessel);
             }
 
+            if (GUILayout.Button("Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))
+            {
+                LaunchDriver.SetLaunchSite(launchText);
 
+            }
 
             GUILayout.EndVertical();
 
