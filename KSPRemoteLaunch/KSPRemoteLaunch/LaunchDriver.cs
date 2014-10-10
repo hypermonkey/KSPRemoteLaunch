@@ -15,20 +15,6 @@ namespace KSPRemoteLaunch
             EditorLogic.fetch.launchSiteName = siteName;
         }
 
-        public static CelestialBody getCelestialBody(String name)
-        {
-            CelestialBody[] bodies = GameObject.FindObjectsOfType(typeof(CelestialBody)) as CelestialBody[];
-            foreach (CelestialBody body in bodies)
-            {
-                if (body.bodyName == name)
-                    return body;
-            }
-            Debug.Log("Couldn't find body \"" + name + "\"");
-            return null;
-        }
-       
-        //private static 
-
         public static void CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName)
         {
             GameObject obj;
@@ -46,16 +32,13 @@ namespace KSPRemoteLaunch
             float visibleRange = 5000;
             LogDebugOnly("Set location variables");
 
-            Transform[] gameObjectList = obj.GetComponentsInChildren<Transform>();
-            List<GameObject> rendererList = (from t in gameObjectList where t.gameObject.renderer != null select t.gameObject).ToList();
-
             PQSCity.LODRange range = new PQSCity.LODRange
             {
-                renderers = rendererList.ToArray(),
-                objects = new GameObject[0],
+                renderers = new GameObject[0],
+                objects = new GameObject [0],
                 visibleRange = visibleRange
             };
-            
+
 
             PQSCity launchPQS;
             
@@ -80,15 +63,10 @@ namespace KSPRemoteLaunch
             launchPQS.Orientate();
             LogDebugOnly("Setup PQSCity");
 
-            foreach (GameObject renderer in rendererList)
-            {
-                renderer.renderer.enabled = true;
-            }
 
+            LogDebugOnly("Creating custom launch site");
 
-            Debug.Log("Creating custom launch site");
-
-
+            //this code is copied from kerbtown
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 if (fi.FieldType.Name == "LaunchSite[]")
@@ -115,16 +93,6 @@ namespace KSPRemoteLaunch
                         fi.SetValue(PSystemSetup.Instance, newSites);
                         sites = newSites;
 
-                        //this is part of another mod???
-                        /*
-                        Texture logo = defaultLaunchSiteLogo;
-                        Texture icon = null;
-                        if (obj.siteLogo != "")
-                            logo = GameDatabase.Instance.GetTexture(obj.siteLogo, false);
-                        if (obj.siteIcon != "")
-                            icon = GameDatabase.Instance.GetTexture(obj.siteIcon, false);
-                        launchSites.Add(new LaunchSite(obj.siteName, (obj.siteAuthor != "") ? obj.siteAuthor : obj.model.author, obj.siteType, logo, icon, obj.siteDescription));
-                        */
                         Debug.Log("Created launch site \"" + newSite.name + "\" with transform " + newSite.launchPadName);
                     }
                     else
@@ -136,7 +104,7 @@ namespace KSPRemoteLaunch
 
             MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupLaunchSites", BindingFlags.NonPublic | BindingFlags.Instance);
             if (updateSitesMI == null)
-                Debug.Log("Fail to find SetupLaunchSites().");
+                LogDebugOnly("Fail to find SetupLaunchSites().");
             else
                 updateSitesMI.Invoke(PSystemSetup.Instance, null);
         }

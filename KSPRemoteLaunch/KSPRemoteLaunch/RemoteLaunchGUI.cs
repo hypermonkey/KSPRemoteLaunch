@@ -59,7 +59,6 @@ namespace KSPRemoteLaunch
                 {
                     lat = double.Parse(latText);
                     lon = double.Parse(lonText);
-                    //height = double.Parse(heightText);//this is redundant
                     LogDebugOnly("Latitude: {0} , Longitude: {1}", lat, lon);
                     LogDebugOnly("Planet: {0}, Launch Pad: {1}", FlightGlobals.Bodies[1].name,launchText);
                     LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText);
