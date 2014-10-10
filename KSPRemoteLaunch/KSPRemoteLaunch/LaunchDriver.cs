@@ -42,9 +42,8 @@ namespace KSPRemoteLaunch
 
             ChangeVesselOrbit(vessel, newOrbit);
 
-            //Set rotation to be normal to the planet - so that the ship stands upright (like on the launchpad)
-
             vessel.SetRotation(QuaternionD.AngleAxis(270.0d + lat, velVector.normalized));
+            
         }
 
         public static void SetLaunchRotationToPlanetNormal(Vessel vessel)

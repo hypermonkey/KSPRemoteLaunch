@@ -71,7 +71,7 @@ namespace KSPRemoteLaunch
                 //LaunchDriver.SetLaunchRotationToPlanetNormal(FlightGlobals.ActiveVessel);
             }
 
-            
+
 
             GUILayout.EndVertical();
 
