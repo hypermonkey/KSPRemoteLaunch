@@ -19,6 +19,7 @@ namespace KSPRemoteLaunch
         private double lon = 0;
         private double height = 0.5;
         private bool windowActive = false;
+        private string result = "";
 
         private void WindowGUI(int windowID)
         {
@@ -52,7 +53,9 @@ namespace KSPRemoteLaunch
             GUILayout.Label("Site Name: ", labelSty, GUILayout.ExpandWidth(true));
             launchText = GUILayout.TextField(launchText, textSty, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
-            
+
+            GUILayout.Label("Result: " + result, labelSty, GUILayout.ExpandWidth(true));
+
             if (GUILayout.Button("Add Launch Location", buttonSty, GUILayout.ExpandWidth(true)))
             {
                 try
@@ -67,13 +70,23 @@ namespace KSPRemoteLaunch
                 catch(Exception e)
                 {
                     LogDebugOnly(e.Message);
+                    
                 }
 
             }
 
             if (GUILayout.Button("Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))
             {
-                LaunchDriver.SetLaunchSite(launchText);
+                try
+                {
+                    LaunchDriver.SetLaunchSite(launchText);
+                    result = "Launch Site Loaded: '" + launchText + "'";
+                }
+                catch(Exception e)
+                {
+                    LogDebugOnly(e.Message);
+                    result = "Can't find Launch Site";
+                }
 
             }
 
@@ -92,6 +105,12 @@ namespace KSPRemoteLaunch
 
         void Start()
         {
+            if (HighLogic.LoadedScene == GameScenes.EDITOR)
+                result = "Launch Site Loaded: 'LaunchPad'";
+            else
+                result = "Launch Site Loaded: 'Runway'";
+
+            
 
             RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//start the GUI
 

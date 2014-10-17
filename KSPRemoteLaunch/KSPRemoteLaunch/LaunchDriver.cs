@@ -10,9 +10,13 @@ namespace KSPRemoteLaunch
     public class LaunchDriver:MonoBehaviourExtended
     {
 
-        public static void SetLaunchSite(String siteName)
+        public static void SetLaunchSite(String siteName) 
         {
-            EditorLogic.fetch.launchSiteName = siteName;
+            if (PSystemSetup.Instance.GetLaunchSite(siteName) != null)
+                EditorLogic.fetch.launchSiteName = siteName;
+            else
+                throw new Exception("Can't find Launch Site: '" + siteName + "'");
+
         }
 
         public static void CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName)
