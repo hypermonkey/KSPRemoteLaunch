@@ -65,11 +65,14 @@ namespace KSPRemoteLaunch
                     LogDebugOnly("Latitude: {0} , Longitude: {1}", lat, lon);
                     LogDebugOnly("Planet: {0}, Launch Pad: {1}", FlightGlobals.Bodies[1].name,launchText);
                     LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText);
-                    
+
+                    //result = "Site '" + launchText + "' created!";
+                    result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
                 }
                 catch(Exception e)
                 {
                     LogDebugOnly(e.Message);
+                    result = e.Message;
                     
                 }
 

@@ -42,7 +42,8 @@ namespace KSPRemoteLaunch
                 LogDebugOnly("Launch Site {0} not created!",siteName);
                 //need to add GUI message here
                 //change method type from void to bool?
-                return;
+                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
+                //return;
             }
                 
 
@@ -121,13 +122,17 @@ namespace KSPRemoteLaunch
                     else
                     {
                         Debug.Log("Launch site " + siteName + " already exists");
+                        throw new Exception("Launch Site '" + siteName + "' already exists");
                     }
                 }
             }
 
             MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupLaunchSites", BindingFlags.NonPublic | BindingFlags.Instance);
             if (updateSitesMI == null)
+            {
                 LogDebugOnly("Fail to find SetupLaunchSites().");
+                throw new Exception("Fatal Error - Can't find method SetupLaunchSites().");
+            }
             else
                 updateSitesMI.Invoke(PSystemSetup.Instance, null);
         }
