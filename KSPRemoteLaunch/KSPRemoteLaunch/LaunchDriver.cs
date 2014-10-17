@@ -27,6 +27,23 @@ namespace KSPRemoteLaunch
 
             Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
             double altitude = body.pqsController.GetSurfaceHeight(position) - body.Radius;
+
+            LogDebugOnly("Altitude: {0}", altitude);
+
+            if (altitude < 0)//then launchsite is underwater
+            {
+                LogDebugOnly("Warning: Launch Site {0} Under Water",siteName);
+                //we can't force the game to place the vessel above water when launching.
+                //use orbit alteration methods to move vessel above water???
+                LogDebugOnly("Launch Site {0} not created!",siteName);
+                //need to add GUI message here
+                //change method type from void to bool?
+                return;
+            }
+                
+
+            
+
             Vector3 orientation = Vector3.up;
             float rotation = 0; //Don't know how to work this out from vessel rotation.
             float visibleRange = 5000;
@@ -46,13 +63,15 @@ namespace KSPRemoteLaunch
             LogDebugOnly("Added PQSCity to gameobject");
             launchPQS.lod = new[] { range };
             launchPQS.frameDelta = 1; //Unknown
-            launchPQS.repositionToSphere = true; //enable repositioning
-            launchPQS.repositionToSphereSurface = false; //Snap to surface?
+            launchPQS.repositionToSphere = true; //enable repositioning to sphere and use RadiusOffset as altitude
+            launchPQS.repositionToSphereSurface = false; //Snap to surface
+            launchPQS.repositionToSphereSurfaceAddHeight = false;//add RadiusOffset to surfaceHeight when using ToSphereSurface
             launchPQS.repositionRadial = position; //position
-            launchPQS.repositionRadiusOffset = altitude; //height
+            launchPQS.repositionRadiusOffset = altitude; //height from surface
             launchPQS.reorientInitialUp = orientation; //orientation
             launchPQS.reorientFinalAngle = rotation; //rotation x axis
             launchPQS.reorientToSphere = true; //adjust rotations to match the direction of gravity
+            
             LogDebugOnly("Set PQSCity variables");
 
             obj.gameObject.transform.parent = body.pqsController.transform;
