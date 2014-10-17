@@ -53,7 +53,7 @@ namespace KSPRemoteLaunch
             launchText = GUILayout.TextField(launchText, textSty, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
             
-            if (GUILayout.Button("Log Position", buttonSty, GUILayout.ExpandWidth(true)))
+            if (GUILayout.Button("Add Launch Location", buttonSty, GUILayout.ExpandWidth(true)))
             {
                 try
                 {
