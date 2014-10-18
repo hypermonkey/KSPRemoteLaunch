@@ -19,11 +19,11 @@ namespace KSPRemoteLaunch
 
         }
 
-        public static void CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName)
+        public static PSystemSetup.LaunchSite CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName)
         {
 
             //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
-            if (lat % 90.0d == 0)
+            if (lat % 90.0d == 0 && lat != 0)
                 throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites to Poles!");
 
             GameObject obj;
@@ -94,7 +94,7 @@ namespace KSPRemoteLaunch
 
 
             LogDebugOnly("Creating custom launch site");
-
+            PSystemSetup.LaunchSite newSite = null;
             //this code is copied from kerbtown
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
@@ -103,7 +103,8 @@ namespace KSPRemoteLaunch
                     PSystemSetup.LaunchSite[] sites = (PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance);
                     if (PSystemSetup.Instance.GetLaunchSite(siteName) == null) //logs 'Can not find launch site' to console 
                     {
-                        PSystemSetup.LaunchSite newSite = new PSystemSetup.LaunchSite();
+                        //PSystemSetup.LaunchSite newSite = new PSystemSetup.LaunchSite();
+                        newSite = new PSystemSetup.LaunchSite();
                         newSite.launchPadName = siteName + "/" + siteTransform; //is siteTransform nessesary?
                         Debug.Log("Launch Pad Name: " + newSite.launchPadName);
                         newSite.name = siteName;
@@ -140,6 +141,25 @@ namespace KSPRemoteLaunch
             }
             else
                 updateSitesMI.Invoke(PSystemSetup.Instance, null);
+
+            return newSite;
+        }
+
+        //get all launch sites - returns null if no sites exist
+        public static List<PSystemSetup.LaunchSite> getLaunchSites()
+        {
+            List<PSystemSetup.LaunchSite> sites = null;
+            //PSystemSetup.LaunchSite[] sites
+            foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                if (fi.FieldType.Name == "LaunchSite[]")
+                {
+                    sites = ((PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance)).ToList<PSystemSetup.LaunchSite>();
+                    
+                }
+            }
+
+            return sites;
         }
 
     }
