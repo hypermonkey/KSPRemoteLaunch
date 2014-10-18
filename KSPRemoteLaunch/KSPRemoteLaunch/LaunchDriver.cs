@@ -21,6 +21,11 @@ namespace KSPRemoteLaunch
 
         public static void CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName)
         {
+
+            //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
+            if (lat % 90.0d == 0)
+                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites to Poles!");
+
             GameObject obj;
             GameObject g = new GameObject("VoidModel_spawn");//the actual transform used
             obj = new GameObject(siteName);
