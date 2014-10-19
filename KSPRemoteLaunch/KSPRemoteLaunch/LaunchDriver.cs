@@ -23,8 +23,13 @@ namespace KSPRemoteLaunch
         {
 
             //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
-            if (lat % 90.0d == 0 && lat != 0)
+            LogDebugOnly("Remainder: " + (lat % 180.0d));
+            if ((lat % 180.0d) % 90.0d == 0 && lat != 0)
                 throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites to Poles!");
+
+            //Game bugs out if a launch site has no name
+            if (siteName.Equals(""))
+                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Launch Site must have a name!");
 
             GameObject obj;
             GameObject g = new GameObject("VoidModel_spawn");//the actual transform used
