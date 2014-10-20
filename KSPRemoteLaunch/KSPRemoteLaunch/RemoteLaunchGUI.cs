@@ -17,6 +17,7 @@ namespace KSPRemoteLaunch
         private string latText = "0.0";
         private string lonText = "0.0";
         private string launchText = "";
+        private string descText = "";
         private double lat = 0;
         private double lon = 0;
         private double height = 0.5;
@@ -91,8 +92,11 @@ namespace KSPRemoteLaunch
                     lon = double.Parse(lonText);
                     LogDebugOnly("Latitude: {0} , Longitude: {1}", lat, lon);
                     LogDebugOnly("Planet: {0}, Launch Pad: {1}", FlightGlobals.Bodies[1].name,launchText);
+                    
+                    //PSystemSetup.LaunchSite newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText,descText);
 
-                    PSystemSetup.LaunchSite newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText);
+                    LaunchSiteExt newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText, descText);
+
                     //result = "Site '" + launchText + "' created!";
                     result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
 
@@ -100,6 +104,7 @@ namespace KSPRemoteLaunch
                         LogDebugOnly("Site: {0} | Enabled: {1}",newSite.name, enabled);
                         //if (!enabled)
                             setLaunchSite(newSite);
+                            
                     }));
 
                 }
@@ -114,6 +119,7 @@ namespace KSPRemoteLaunch
 
             if (GUILayout.Button("Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))
             {
+                
                 try
                 {
                     LaunchDriver.SetLaunchSite(launchText);
@@ -127,7 +133,7 @@ namespace KSPRemoteLaunch
 
             }
 
-            
+            descText = GUILayout.TextArea(descText, textSty, GUILayout.ExpandHeight(true));
 
 
             GUILayout.EndVertical();
@@ -135,11 +141,12 @@ namespace KSPRemoteLaunch
             GUI.DragWindow(new Rect(0, 0, 250, 30));
         }
 
-        private void setLaunchSite(PSystemSetup.LaunchSite site)
+        private void setLaunchSite(LaunchSiteExt site)
         {
             try
             {
                 LaunchDriver.SetLaunchSite(site.name);
+                descText = site.description;
                 //result = "Launch Site Loaded: '" + site.name + "'";
             }
             catch (Exception e)
@@ -178,7 +185,7 @@ namespace KSPRemoteLaunch
             SiteToggleList = new GUIOptionGroup();
             LogDebugOnly("Created empty optionGroup");
             
-            LaunchDriver.getLaunchSites().ForEach(delegate(PSystemSetup.LaunchSite site)
+            LaunchDriver.getLaunchSites().ForEach(delegate(LaunchSiteExt site)
             {
                 GUIToggleButton btn = new GUIToggleButton(site.name,delegate(bool enabled) {
                     
@@ -202,6 +209,7 @@ namespace KSPRemoteLaunch
             }
             windowActive = true;
            
+
             LogDebugOnly("GUI Added");
 
 

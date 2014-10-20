@@ -7,8 +7,61 @@ using System.Reflection;
 
 namespace KSPRemoteLaunch
 {
+    [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class LaunchDriver:MonoBehaviourExtended
     {
+
+        private static List<LaunchSiteExt> launchSites = new List<LaunchSiteExt>();
+        private static bool firstTime = true;
+
+        void Start()
+        {
+            if (!firstTime)
+                return;
+            //change default launch sites to extended version?
+            foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                if (fi.FieldType.Name == "LaunchSite[]")
+                {
+                    PSystemSetup.LaunchSite[] sites = (PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance);
+
+                    LaunchSiteExt LaunchPad = new LaunchSiteExt();
+                    //LaunchPad = (LaunchSiteExt)sites[0];
+                    LaunchPad.description = "The Launch Pad!";
+                    LaunchPad.launchPadName = sites[0].launchPadName;
+                    LaunchPad.launchPadPQS = sites[0].launchPadPQS;
+                    LaunchPad.launchPadTransform = sites[0].launchPadTransform;
+                    LaunchPad.name = sites[0].name;
+                    LaunchPad.pqsName = sites[0].pqsName;
+
+                    LaunchSiteExt Runway = new LaunchSiteExt();
+                    //Runway = (LaunchSiteExt)sites[1];
+                    Runway.description = "The Runway!";
+                    Runway.launchPadName = sites[1].launchPadName;
+                    Runway.launchPadPQS = sites[1].launchPadPQS;
+                    Runway.launchPadTransform = sites[1].launchPadTransform;
+                    Runway.name = sites[1].name;
+                    Runway.pqsName = sites[1].pqsName;
+
+
+                    
+
+                    //launchSites = new List<LaunchSiteExt>();
+
+                        LogDebugOnly("Sites Created");
+                        sites[0] = LaunchPad;
+                        sites[1] = Runway;
+                        launchSites.Add(LaunchPad);
+                        launchSites.Add(Runway);
+                    
+
+                    LogDebugOnly("Sites Added");
+
+                    firstTime = false;
+
+                }
+            }
+        }
 
         public static void SetLaunchSite(String siteName) 
         {
@@ -19,7 +72,7 @@ namespace KSPRemoteLaunch
 
         }
 
-        public static PSystemSetup.LaunchSite CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName)
+        public static LaunchSiteExt CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName,string description)
         {
 
             //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
@@ -99,7 +152,8 @@ namespace KSPRemoteLaunch
 
 
             LogDebugOnly("Creating custom launch site");
-            PSystemSetup.LaunchSite newSite = null;
+            //PSystemSetup.LaunchSite newSite = null;
+            LaunchSiteExt newSite = null;
             //this code is copied from kerbtown
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
@@ -109,10 +163,11 @@ namespace KSPRemoteLaunch
                     if (PSystemSetup.Instance.GetLaunchSite(siteName) == null) //logs 'Can not find launch site' to console 
                     {
                         //PSystemSetup.LaunchSite newSite = new PSystemSetup.LaunchSite();
-                        newSite = new PSystemSetup.LaunchSite();
+                        newSite = new LaunchSiteExt();
                         newSite.launchPadName = siteName + "/" + siteTransform; //is siteTransform nessesary?
                         Debug.Log("Launch Pad Name: " + newSite.launchPadName);
                         newSite.name = siteName;
+                        newSite.description = description;
                         newSite.pqsName = body.bodyName;
                         Debug.Log("PQS Name: " + newSite.pqsName);
 
@@ -147,25 +202,23 @@ namespace KSPRemoteLaunch
             else
                 updateSitesMI.Invoke(PSystemSetup.Instance, null);
 
+            launchSites.Add(newSite);
             return newSite;
         }
 
         //get all launch sites - returns null if no sites exist
-        public static List<PSystemSetup.LaunchSite> getLaunchSites()
+        public static List<LaunchSiteExt> getLaunchSites()
         {
-            List<PSystemSetup.LaunchSite> sites = null;
-            //PSystemSetup.LaunchSite[] sites
-            foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                if (fi.FieldType.Name == "LaunchSite[]")
-                {
-                    sites = ((PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance)).ToList<PSystemSetup.LaunchSite>();
-                    
-                }
-            }
+            LogDebugOnly("Getting Launch Sites");
 
-            return sites;
+            return launchSites;
         }
+
+    }
+
+    public class LaunchSiteExt: PSystemSetup.LaunchSite
+    {
+        public string description;
 
     }
 
