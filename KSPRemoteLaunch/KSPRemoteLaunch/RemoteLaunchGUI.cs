@@ -117,22 +117,6 @@ namespace KSPRemoteLaunch
 
             }
 
-            if (GUILayout.Button("Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))
-            {
-                
-                try
-                {
-                    LaunchDriver.SetLaunchSite(launchText);
-                    //result = "Launch Site Loaded: '" + launchText + "'";
-                }
-                catch(Exception e)
-                {
-                    LogDebugOnly(e.Message);
-                    result = "Can't find Launch Site";
-                }
-
-            }
-
             descText = GUILayout.TextArea(descText, textSty, GUILayout.ExpandHeight(true));
 
 
