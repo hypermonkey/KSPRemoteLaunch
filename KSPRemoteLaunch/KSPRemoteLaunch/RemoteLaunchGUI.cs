@@ -84,7 +84,7 @@ namespace KSPRemoteLaunch
 
             GUILayout.Label("Result: " + result, labelSty, GUILayout.ExpandWidth(true));
 
-            if (GUILayout.Button("Add Launch Location", buttonSty, GUILayout.ExpandWidth(true)))
+            if (GUILayout.Button("Add & Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))
             {
                 try
                 {
@@ -100,7 +100,7 @@ namespace KSPRemoteLaunch
                     //result = "Site '" + launchText + "' created!";
                     result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
 
-                    SiteToggleList.addToggleButton(new GUIToggleButton(launchText, delegate(bool enabled) {
+                    SiteToggleList.addActiveToggleButton(new GUIToggleButton(launchText, delegate(bool enabled) {
                         LogDebugOnly("Site: {0} | Enabled: {1}",newSite.name, enabled);
                         //if (!enabled)
                             setLaunchSite(newSite);
@@ -254,15 +254,17 @@ namespace KSPRemoteLaunch
 
         public void setActiveToggleButton(GUIToggleButton toggleButton)
         {
-            activeButton = toggleButton;
-            activeButton.enable();
+            changeActiveToggleButton(toggleButton);
+            //activeButton = toggleButton;
+            //activeButton.enable();
         }
 
         public void addActiveToggleButton(GUIToggleButton toggleButton)
         {
             buttons.Add(toggleButton);
-            activeButton = toggleButton;
-            activeButton.enable();
+            changeActiveToggleButton(toggleButton);
+            //activeButton = toggleButton;
+            //activeButton.enable();
         }
 
         public void checkSelected()
@@ -283,6 +285,16 @@ namespace KSPRemoteLaunch
                 }
             }
 
+        }
+
+        private void changeActiveToggleButton(GUIToggleButton toggleButton)
+        {
+            if (activeButton != null)
+            {
+                activeButton.dissable();
+            }
+            toggleButton.enable();
+            activeButton = toggleButton;
         }
         
 
