@@ -10,7 +10,8 @@ namespace KSPRemoteLaunch
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class LaunchDriver:MonoBehaviourExtended
     {
-
+        private static string SavePath = KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
+        private static string SaveFile = "Persistant-LaunchSites.sfs";
         private static List<LaunchSiteExt> launchSites = new List<LaunchSiteExt>();
         private static bool firstTime = true;
 
@@ -42,25 +43,94 @@ namespace KSPRemoteLaunch
                     Runway.launchPadTransform = sites[1].launchPadTransform;
                     Runway.name = sites[1].name;
                     Runway.pqsName = sites[1].pqsName;
-
-
                     
+                    LogDebugOnly("Sites Created");
+                    sites[0] = LaunchPad;
+                    sites[1] = Runway;
+                    launchSites.Add(LaunchPad);
+                    launchSites.Add(Runway);
 
-                    //launchSites = new List<LaunchSiteExt>();
-
-                        LogDebugOnly("Sites Created");
-                        sites[0] = LaunchPad;
-                        sites[1] = Runway;
-                        launchSites.Add(LaunchPad);
-                        launchSites.Add(Runway);
-                    
-
+                    LoadLaunchSites();
                     LogDebugOnly("Sites Added");
 
                     firstTime = false;
-
                 }
             }
+        }
+
+        private static void LoadLaunchSites()
+        {
+            LogDebugOnly("Loading Launch Sites");
+            ConfigNode launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
+            if (launchSiteLoad == null)
+                return;//Nothing to load
+            LogDebugOnly("Launch Sites File Found");
+            foreach (ConfigNode c in launchSiteLoad.GetNodes("LaunchSite"))
+            {
+                double lat = double.Parse(c.GetValue("Lat"));
+                double lon = double.Parse(c.GetValue("Lon"));
+                CelestialBody theBody = FlightGlobals.Bodies.Find(body => body.name == c.GetValue("Body"));
+                string siteName = c.GetValue("Name");
+                string desc =  c.GetValue("Description");
+                CreateCustomLaunchSite(lat,lon,theBody,siteName,desc);
+            }
+
+
+        }
+
+        private static void SaveLaunchSites()
+        {
+            ConfigNode launchSiteSave = new ConfigNode("LaunchSites");
+
+
+            foreach (LaunchSiteExt saveSite in launchSites.FindAll(site => site.name != "LaunchPad" || site.name != "Runway"))
+            {
+                ConfigNode site = new ConfigNode("LaunchSite");
+                site.AddValue("Name", saveSite.name);
+                site.AddValue("Lat", saveSite.lat);
+                site.AddValue("Lon", saveSite.lon);
+                site.AddValue("Body", saveSite.body);
+                site.AddValue("Description", saveSite.description);
+                launchSiteSave.AddNode(site);
+            }
+
+
+            launchSiteSave.Save(SavePath + SaveFile);
+
+        }
+
+        public static void SaveLaunchSite(LaunchSiteExt site)
+        {
+            ConfigNode launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
+            if (launchSiteLoad == null)
+            {
+                //we need to create the file
+                launchSiteLoad = new ConfigNode("LaunchSites");
+            }
+            //although there should be only one node with the specified name - we can't guarentee this (user may edit file)
+            ConfigNode confSite = launchSiteLoad.GetNodes("LaunchSite").ToList<ConfigNode>().FirstOrDefault(conf => conf.GetValue("Name") == site.name);
+            if (confSite != null)
+            {
+                //edit existing
+                confSite.SetValue("Name", site.name);
+                confSite.SetValue("Lat", site.lat.ToString());
+                confSite.SetValue("Lon", site.lon.ToString());
+                confSite.SetValue("Body", site.body);
+                confSite.SetValue("Description", site.description);
+                launchSiteLoad.AddNode(confSite);
+            }
+            else
+            {
+                //add new
+                confSite = new ConfigNode("LaunchSite");
+                confSite.AddValue("Name", site.name);
+                confSite.AddValue("Lat", site.lat);
+                confSite.AddValue("Lon", site.lon);
+                confSite.AddValue("Body", site.body);
+                confSite.AddValue("Description", site.description);
+                launchSiteLoad.AddNode(confSite);
+            }
+            launchSiteLoad.Save(SavePath + SaveFile);
         }
 
         public static void SetLaunchSite(String siteName) 
@@ -169,6 +239,11 @@ namespace KSPRemoteLaunch
                         newSite.name = siteName;
                         newSite.description = description;
                         newSite.pqsName = body.bodyName;
+
+                        newSite.lat = lat;
+                        newSite.lon = lon;
+                        newSite.body = body.name;
+
                         Debug.Log("PQS Name: " + newSite.pqsName);
 
                         PSystemSetup.LaunchSite[] newSites = new PSystemSetup.LaunchSite[sites.Length + 1];
@@ -203,6 +278,7 @@ namespace KSPRemoteLaunch
                 updateSitesMI.Invoke(PSystemSetup.Instance, null);
 
             launchSites.Add(newSite);
+            //SaveLaunchSite(newSite);
             return newSite;
         }
 
@@ -219,6 +295,10 @@ namespace KSPRemoteLaunch
     public class LaunchSiteExt: PSystemSetup.LaunchSite
     {
         public string description;
+        public double lat;
+        public double lon;
+        public string body;
+
 
     }
 

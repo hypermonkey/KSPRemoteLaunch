@@ -107,6 +107,8 @@ namespace KSPRemoteLaunch
                             
                     }));
 
+                    LaunchDriver.SaveLaunchSite(newSite);
+                    
                 }
                 catch(Exception e)
                 {
@@ -158,6 +160,8 @@ namespace KSPRemoteLaunch
             else
                 result = "Launch Site Loaded: 'Runway'";
             */
+
+            //LaunchDriver.LoadLaunchSites();
             LogDebugOnly("Starting OptionGroup setup");
 
             //GUIStyle toggleSty = new GUIStyle(GUI.skin.button);
