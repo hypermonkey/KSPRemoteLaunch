@@ -90,7 +90,7 @@ namespace KSPRemoteLaunch
 
 
             GUILayout.Label("Result: " + result, labelSty, GUILayout.ExpandWidth(true));
-
+#if DEBUG
             if (GUILayout.Button("Add & Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))
             {
                 try
@@ -125,7 +125,7 @@ namespace KSPRemoteLaunch
                 }
 
             }
-
+#endif
             descText = GUILayout.TextArea(descText, textSty, GUILayout.ExpandHeight(true));
 
 
