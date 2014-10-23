@@ -18,6 +18,7 @@ namespace KSPRemoteLaunch
         private string lonText = "0.0";
         private string launchText = "";
         private string descText = "";
+        private string planetText = "";
         private double lat = 0;
         private double lon = 0;
         private double height = 0.5;
@@ -78,9 +79,15 @@ namespace KSPRemoteLaunch
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
+            GUILayout.Label("Planet:   ", labelSty, GUILayout.ExpandWidth(true));
+            planetText = GUILayout.TextField(planetText, textSty, GUILayout.ExpandWidth(true));
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
             GUILayout.Label("Site Name: ", labelSty, GUILayout.ExpandWidth(true));
             launchText = GUILayout.TextField(launchText, textSty, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
+
 
             GUILayout.Label("Result: " + result, labelSty, GUILayout.ExpandWidth(true));
 
@@ -94,8 +101,8 @@ namespace KSPRemoteLaunch
                     LogDebugOnly("Planet: {0}, Launch Pad: {1}", FlightGlobals.Bodies[1].name,launchText);
                     
                     //PSystemSetup.LaunchSite newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText,descText);
-
-                    LaunchSiteExt newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText, descText);
+                    CelestialBody planet = FlightGlobals.Bodies.Single<CelestialBody>(body => body.name == planetText);
+                    LaunchSiteExt newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, planet, launchText, descText);
 
                     //result = "Site '" + launchText + "' created!";
                     result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
