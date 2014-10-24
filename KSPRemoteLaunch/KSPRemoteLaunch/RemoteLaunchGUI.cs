@@ -19,6 +19,8 @@ namespace KSPRemoteLaunch
         private string launchText = "";
         private string descText = "";
         private string planetText = "";
+        //private Vector2 scrollPos = new Vector2(0, 0);
+
         private double lat = 0;
         private double lon = 0;
         private double height = 0.5;
@@ -49,10 +51,13 @@ namespace KSPRemoteLaunch
             //toggleSty.onNormal.textColor = Color.green;
 
 
+            GUI.DragWindow(new Rect(0, 0, 500, 30));
+
+            GUILayout.BeginHorizontal();
             GUILayout.BeginVertical();
             
 
-            GUILayout.Label("Launch Sites:", labelSty, GUILayout.ExpandWidth(true));
+            GUILayout.Label("Launch Sites:", labelSty, GUILayout.Width(210.0f));
             
             //LaunchDriver.getLaunchSites().ForEach(delegate(PSystemSetup.LaunchSite site)
             //{
@@ -65,33 +70,50 @@ namespace KSPRemoteLaunch
                 //}
             //    new GUIToggleButton().CheckPressed(site.name, delegate(bool enabled) { if (!enabled) setLaunchSite(site); });
             //});
+
+            //scrollPos = GUILayout.BeginScrollView(scrollPos, GUI.skin.scrollView,GUILayout.Width(210.0f));
             SiteToggleList.setStyle(toggleSty);
             SiteToggleList.checkSelected();
+            //GUILayout.EndScrollView();
+
+            GUILayout.EndVertical();
+
+            
+
+            GUILayout.BeginVertical();
+
+            //float labelColWidth = 100.0f;
+            GUILayoutOption labelColWidth = GUILayout.Width(100.0f);
+            GUILayoutOption textColWidth = GUILayout.Width(150.0f);
+            GUILayoutOption totalColWidth = GUILayout.Width(250.0f);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Latitude:  ", labelSty, GUILayout.ExpandWidth(true));
-            latText = GUILayout.TextField(latText, textSty, GUILayout.ExpandWidth(true));
+            GUILayout.Label("Site Name: ", labelSty, labelColWidth);//, GUILayout.ExpandWidth(true));
+            launchText = GUILayout.TextField(launchText, textSty, textColWidth);//, GUILayout.ExpandWidth(true));
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Planet:   ", labelSty, labelColWidth);//, GUILayout.ExpandWidth(true));
+            planetText = GUILayout.TextField(planetText, textSty, textColWidth);//, GUILayout.ExpandWidth(true));
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Latitude:  ", labelSty, labelColWidth);//, GUILayout.ExpandWidth(true));
+            latText = GUILayout.TextField(latText, textSty, textColWidth);//, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
             
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Longitude: ", labelSty, GUILayout.ExpandWidth(true));
-            lonText = GUILayout.TextField(lonText, textSty, GUILayout.ExpandWidth(true));
+            GUILayout.Label("Longitude: ", labelSty, labelColWidth);//, GUILayout.ExpandWidth(true));
+            lonText = GUILayout.TextField(lonText, textSty, textColWidth);//, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
+
+            GUILayout.Label("Result: " + result, labelSty,totalColWidth);//, GUILayout.ExpandWidth(true));
+
+            descText = GUILayout.TextArea(descText, textSty, totalColWidth);//, GUILayout.ExpandHeight(true));
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Planet:   ", labelSty, GUILayout.ExpandWidth(true));
-            planetText = GUILayout.TextField(planetText, textSty, GUILayout.ExpandWidth(true));
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Site Name: ", labelSty, GUILayout.ExpandWidth(true));
-            launchText = GUILayout.TextField(launchText, textSty, GUILayout.ExpandWidth(true));
-            GUILayout.EndHorizontal();
-
-
-            GUILayout.Label("Result: " + result, labelSty, GUILayout.ExpandWidth(true));
 #if DEBUG
-            if (GUILayout.Button("Add & Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))
+            if (GUILayout.Button("Add & Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))//, GUILayout.ExpandWidth(true)))
             {
                 try
                 {
@@ -107,7 +129,7 @@ namespace KSPRemoteLaunch
                     //result = "Site '" + launchText + "' created!";
                     result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
 
-                    SiteToggleList.addActiveToggleButton(new GUIToggleButton(launchText, delegate(bool enabled) {
+                    SiteToggleList.addActiveToggleButton(new GUIOptionButton(launchText, delegate(bool enabled) {
                         LogDebugOnly("Site: {0} | Enabled: {1}",newSite.name, enabled);
                         //if (!enabled)
                             setLaunchSite(newSite);
@@ -126,12 +148,22 @@ namespace KSPRemoteLaunch
 
             }
 #endif
-            descText = GUILayout.TextArea(descText, textSty, GUILayout.ExpandHeight(true));
 
+            if (GUILayout.Button("Clear Fields", buttonSty,GUILayout.ExpandWidth(true)))
+            {
+                descText = "";
+                latText = "";
+                lonText = "";
+                launchText = "";
+                planetText = "";
+            
+            }
+
+            GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
-
-            GUI.DragWindow(new Rect(0, 0, 250, 30));
+            GUILayout.EndHorizontal();
+            
         }
 
         private void setLaunchSite(LaunchSiteExt site)
@@ -140,6 +172,11 @@ namespace KSPRemoteLaunch
             {
                 LaunchDriver.SetLaunchSite(site.name);
                 descText = site.description;
+                latText = site.lat.ToString();
+                lonText = site.lon.ToString();
+                launchText = site.name;
+                planetText = site.body;
+
                 //result = "Launch Site Loaded: '" + site.name + "'";
             }
             catch (Exception e)
@@ -154,8 +191,8 @@ namespace KSPRemoteLaunch
         private void drawGUI()
         {
             GUI.skin = HighLogic.Skin;
-            windowPos = GUILayout.Window(1, windowPos, WindowGUI, "Remote Launch", GUILayout.MinWidth(250), GUILayout.MinHeight(150));
-
+            //windowPos = GUILayout.Window(1, windowPos, WindowGUI, "Remote Launch", GUILayout.MinWidth(250), GUILayout.MinHeight(150));
+            windowPos = GUILayout.Window(1, windowPos, WindowGUI, "Remote Launch");
         }
 
         void Start()
@@ -182,11 +219,13 @@ namespace KSPRemoteLaunch
             
             LaunchDriver.getLaunchSites().ForEach(delegate(LaunchSiteExt site)
             {
-                GUIToggleButton btn = new GUIToggleButton(site.name,delegate(bool enabled) {
+                GUIOptionButton btn = new GUIOptionButton(site.name,delegate(bool enabled) {
                     
                     LogDebugOnly("Site: {0} | Enabled: {1}", site.name, enabled);
                     //if (!enabled)
-                        setLaunchSite(site);
+                    setLaunchSite(site);
+
+
                 });
 
                 SiteToggleList.addToggleButton(btn);
@@ -196,17 +235,26 @@ namespace KSPRemoteLaunch
 
             });
             LogDebugOnly("Site Button Setup Done");
-            RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//start the GUI
+            
 
+            /*
             if ((windowPos.x == 0) && (windowPos.y == 0))//windowPos is used to position the GUI window, lets set it in the center of the screen
             {
                 windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
             }
+            */
+
+            //centre the window
+            windowPos.x = Screen.width / 2;
+            windowPos.y = Screen.height / 2;
+
+            RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//start the GUI
+
             windowActive = true;
            
 
             LogDebugOnly("GUI Added");
-
+            
 
         }
 
@@ -222,7 +270,7 @@ namespace KSPRemoteLaunch
                 }
                 else
                 {
-                    RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//start the GUI
+                    RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open the GUI
                     windowActive = true;
                 }
 
@@ -238,39 +286,40 @@ namespace KSPRemoteLaunch
 
         }
     }
-
+    
     internal class GUIOptionGroup
     {
-        private List<GUIToggleButton> buttons;
-        private GUIToggleButton activeButton;
+        private List<GUIOptionButton> buttons;
+        private GUIOptionButton activeButton;
         //private GUIStyle buttonStyle;
+        private Vector2 scrollPos = new Vector2(0, 0);
 
         public GUIOptionGroup()
         {
-            buttons = new List<GUIToggleButton>();
+            buttons = new List<GUIOptionButton>();
         }
 
         public void setStyle(GUIStyle style)
         {
-            foreach (GUIToggleButton btn in buttons)
+            foreach (GUIOptionButton btn in buttons)
             {
                 btn.setStyle(style);
             }
         }
 
-        public void addToggleButton(GUIToggleButton toggleButton)
+        public void addToggleButton(GUIOptionButton toggleButton)
         {
             buttons.Add(toggleButton);
         }
 
-        public void setActiveToggleButton(GUIToggleButton toggleButton)
+        public void setActiveToggleButton(GUIOptionButton toggleButton)
         {
             changeActiveToggleButton(toggleButton);
             //activeButton = toggleButton;
             //activeButton.enable();
         }
 
-        public void addActiveToggleButton(GUIToggleButton toggleButton)
+        public void addActiveToggleButton(GUIOptionButton toggleButton)
         {
             buttons.Add(toggleButton);
             changeActiveToggleButton(toggleButton);
@@ -280,7 +329,8 @@ namespace KSPRemoteLaunch
 
         public void checkSelected()
         {
-            foreach (GUIToggleButton btn in buttons)
+            scrollPos = GUILayout.BeginScrollView(scrollPos, GUI.skin.scrollView, GUILayout.Width(210.0f));
+            foreach (GUIOptionButton btn in buttons)
             {
                 if (btn.CheckPressed() && btn != activeButton)
                 {
@@ -295,10 +345,10 @@ namespace KSPRemoteLaunch
                     //activeButton.enable();
                 }
             }
-
+            GUILayout.EndScrollView();
         }
 
-        private void changeActiveToggleButton(GUIToggleButton toggleButton)
+        private void changeActiveToggleButton(GUIOptionButton toggleButton)
         {
             if (activeButton != null)
             {
@@ -311,7 +361,8 @@ namespace KSPRemoteLaunch
 
     }
     
-    internal class GUIToggleButton
+    //this should be internal to OptionGroup?
+    internal class GUIOptionButton
     {
         private GUIStyle buttonStyle;
         private string GUIText;
@@ -319,7 +370,7 @@ namespace KSPRemoteLaunch
         //private params GUILayoutOption[] options;
         private onSelected selectedAction;
 
-        public GUIToggleButton(string text, onSelected action)
+        public GUIOptionButton(string text, onSelected action)
         {
             selectedAction = action;
             GUIText = text;
@@ -336,7 +387,7 @@ namespace KSPRemoteLaunch
         public bool CheckPressed()
         {
             bool pressed = false;
-            if (GUILayout.Toggle(enabled, GUIText, buttonStyle, GUILayout.ExpandWidth(true)))
+            if (GUILayout.Toggle(enabled, GUIText, buttonStyle, GUILayout.Width(174.0f)))
             {
                 
                 //enabled = !enabled;

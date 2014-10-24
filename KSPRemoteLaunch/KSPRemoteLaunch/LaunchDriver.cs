@@ -27,7 +27,6 @@ namespace KSPRemoteLaunch
                     PSystemSetup.LaunchSite[] sites = (PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance);
 
                     LaunchSiteExt LaunchPad = new LaunchSiteExt();
-                    //LaunchPad = (LaunchSiteExt)sites[0];
                     LaunchPad.description = "The Launch Pad!";
                     LaunchPad.launchPadName = sites[0].launchPadName;
                     LaunchPad.launchPadPQS = sites[0].launchPadPQS;
@@ -35,15 +34,39 @@ namespace KSPRemoteLaunch
                     LaunchPad.name = sites[0].name;
                     LaunchPad.pqsName = sites[0].pqsName;
 
+                    //PQSCity cty = LaunchPad.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
+                    //cty = LaunchPad.launchPadTransform.localPosition
+                    //LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
+                    LaunchPad.launchPadPQS.SetTarget(LaunchPad.launchPadTransform);
+                    PSystemSetup.Instance.SetPQSActive(LaunchPad.launchPadPQS);
+                    LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
+                    //cty.Orientate();
+
+                    LaunchPad.lon = FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position);
+                    LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(LaunchPad.launchPadTransform.position);
+                    //LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(cty.transform.position);
+                    LaunchPad.body = "Kerbin";
+
                     LaunchSiteExt Runway = new LaunchSiteExt();
-                    //Runway = (LaunchSiteExt)sites[1];
                     Runway.description = "The Runway!";
                     Runway.launchPadName = sites[1].launchPadName;
                     Runway.launchPadPQS = sites[1].launchPadPQS;
                     Runway.launchPadTransform = sites[1].launchPadTransform;
                     Runway.name = sites[1].name;
                     Runway.pqsName = sites[1].pqsName;
-                    
+
+                    //cty = Runway.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
+                    //cty.Orientate();
+                    //Runway.lon = FlightGlobals.Bodies[1].GetLongitude(cty.transform.position);
+                    //Runway.lat = FlightGlobals.Bodies[1].GetLatitude(cty.transform.position);
+
+                    Runway.launchPadPQS.SetTarget(LaunchPad.launchPadTransform);
+                    PSystemSetup.Instance.SetPQSActive(Runway.launchPadPQS);
+                    Runway.lon = FlightGlobals.Bodies[1].GetLongitude(Runway.launchPadTransform.position);
+                    Runway.lat = FlightGlobals.Bodies[1].GetLatitude(Runway.launchPadTransform.position);
+                    PSystemSetup.Instance.SetPQSInactive();
+                    Runway.body = "Kerbin";
+
                     LogDebugOnly("Sites Created");
                     sites[0] = LaunchPad;
                     sites[1] = Runway;
@@ -197,22 +220,23 @@ namespace KSPRemoteLaunch
 
             PQSCity launchPQS;
             
-            launchPQS = obj.gameObject.AddComponent<PQSCity>(); //Adds a PQSCity to the game object - appears to put it into the PQS[] in PSystemSetup
+            launchPQS = obj.AddComponent<PQSCity>(); //Adds a PQSCity to the game object - appears to put it into the PQS[] in PSystemSetup
             LogDebugOnly("Added PQSCity to gameobject");
             launchPQS.lod = new[] { range };
             launchPQS.frameDelta = 1; //Unknown
-            launchPQS.repositionToSphere = true; //enable repositioning to sphere and use RadiusOffset as altitude
-            launchPQS.repositionToSphereSurface = false; //Snap to surface
-            launchPQS.repositionToSphereSurfaceAddHeight = false;//add RadiusOffset to surfaceHeight when using ToSphereSurface
+            launchPQS.repositionToSphere = false; //enable repositioning to sphere and use RadiusOffset as altitude
+            launchPQS.repositionToSphereSurface = true; //Snap to surface
+            launchPQS.repositionToSphereSurfaceAddHeight = true;//add RadiusOffset to surfaceHeight when using ToSphereSurface
             launchPQS.repositionRadial = position; //position
-            launchPQS.repositionRadiusOffset = altitude; //height from surface
+            //launchPQS.repositionRadiusOffset = altitude; //height from surface
+            launchPQS.repositionRadiusOffset = 5.0d;//safety distance
             launchPQS.reorientInitialUp = orientation; //orientation
             launchPQS.reorientFinalAngle = rotation; //rotation x axis
             launchPQS.reorientToSphere = true; //adjust rotations to match the direction of gravity
             
             LogDebugOnly("Set PQSCity variables");
 
-            obj.gameObject.transform.parent = body.pqsController.transform;
+            obj.transform.parent = body.pqsController.transform;
             launchPQS.sphere = body.pqsController;
             launchPQS.order = 100;
             launchPQS.modEnabled = true;
