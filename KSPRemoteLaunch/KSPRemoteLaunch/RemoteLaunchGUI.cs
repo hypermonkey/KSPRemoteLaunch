@@ -28,6 +28,7 @@ namespace KSPRemoteLaunch
         private string result = "";
         //private List<GUIToggleButton> SiteToggleList;
         private GUIOptionGroup SiteToggleList;
+        private LaunchSiteExt currentLaunchSite = null;
 
         private void WindowGUI(int windowID)
         {
@@ -59,27 +60,11 @@ namespace KSPRemoteLaunch
 
             GUILayout.Label("Launch Sites:", labelSty, GUILayout.Width(210.0f));
             
-            //LaunchDriver.getLaunchSites().ForEach(delegate(PSystemSetup.LaunchSite site)
-            //{
-                //GUILayout.Label(site.name, labelSty, GUILayout.ExpandWidth(true));
-                //Boolean enabled = true;
-                //if (GUILayout.Toggle(enabled,site.name, toggleSty, GUILayout.ExpandWidth(true)))
-                //{
-                //    enabled = true;
-                //    setLaunchSite(site);
-                //}
-            //    new GUIToggleButton().CheckPressed(site.name, delegate(bool enabled) { if (!enabled) setLaunchSite(site); });
-            //});
 
-            //scrollPos = GUILayout.BeginScrollView(scrollPos, GUI.skin.scrollView,GUILayout.Width(210.0f));
             SiteToggleList.setStyle(toggleSty);
             SiteToggleList.checkSelected();
-            //GUILayout.EndScrollView();
 
             GUILayout.EndVertical();
-
-            
-
             GUILayout.BeginVertical();
 
             //float labelColWidth = 100.0f;
@@ -113,7 +98,7 @@ namespace KSPRemoteLaunch
 
             GUILayout.BeginHorizontal();
 #if DEBUG
-            if (GUILayout.Button("Add & Set Launch Site", buttonSty, GUILayout.ExpandWidth(true)))//, GUILayout.ExpandWidth(true)))
+            if (GUILayout.Button("Add", buttonSty, GUILayout.ExpandWidth(true)))//, GUILayout.ExpandWidth(true)))
             {
                 try
                 {
@@ -129,13 +114,13 @@ namespace KSPRemoteLaunch
                     //result = "Site '" + launchText + "' created!";
                     result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
 
-                    SiteToggleList.addActiveToggleButton(new GUIOptionButton(launchText, delegate(bool enabled) {
+                    SiteToggleList.addActiveToggleButton(launchText, delegate(bool enabled) {
                         LogDebugOnly("Site: {0} | Enabled: {1}",newSite.name, enabled);
-                        //if (!enabled)
-                            setLaunchSite(newSite);
+                        setLaunchSite(newSite);
+                        currentLaunchSite = newSite;
                             
-                    }));
-
+                    });
+                    //move this to LaunchDriver.CreateCustomLaunchSite
                     LaunchDriver.SaveLaunchSite(newSite);
                     
                 }
@@ -147,6 +132,27 @@ namespace KSPRemoteLaunch
                 }
 
             }
+
+            if (GUILayout.Button("Update", buttonSty, GUILayout.ExpandWidth(true)))
+            {
+                try
+                {
+                    currentLaunchSite.body = planetText;
+                    currentLaunchSite.description = descText;
+                    currentLaunchSite.lat = double.Parse(latText);
+                    currentLaunchSite.lon = double.Parse(lonText);
+                    currentLaunchSite.name = launchText;
+                    LaunchDriver.UpdateLaunchSite(currentLaunchSite);
+                    //move this into update?
+                    LaunchDriver.SaveLaunchSite(currentLaunchSite);
+                }
+                catch(Exception e)
+                {
+                    LogDebugOnly(e.Message);
+                    result = e.Message;
+                }
+            }
+
 #endif
 
             if (GUILayout.Button("Clear Fields", buttonSty,GUILayout.ExpandWidth(true)))
@@ -197,53 +203,32 @@ namespace KSPRemoteLaunch
 
         void Start()
         {
-            //this is not needed now we have the GUIOptionGroup
-            /*
-            if (HighLogic.LoadedScene == GameScenes.EDITOR)
-                result = "Launch Site Loaded: 'LaunchPad'";
-            else
-                result = "Launch Site Loaded: 'Runway'";
-            */
-
-            //LaunchDriver.LoadLaunchSites();
-            LogDebugOnly("Starting OptionGroup setup");
-
-            //GUIStyle toggleSty = new GUIStyle(GUI.skin.button);
-            //toggleSty.normal.textColor = Color.white;
-            //toggleSty.padding = new RectOffset(8, 8, 8, 8);
-
-            LogDebugOnly("Style Setup Done");
+            
 
             SiteToggleList = new GUIOptionGroup();
-            LogDebugOnly("Created empty optionGroup");
             
             LaunchDriver.getLaunchSites().ForEach(delegate(LaunchSiteExt site)
             {
-                GUIOptionButton btn = new GUIOptionButton(site.name,delegate(bool enabled) {
-                    
-                    LogDebugOnly("Site: {0} | Enabled: {1}", site.name, enabled);
-                    //if (!enabled)
-                    setLaunchSite(site);
-
-
-                });
-
-                SiteToggleList.addToggleButton(btn);
-
                 if (HighLogic.LoadedScene == GameScenes.EDITOR && site.name == "LaunchPad" || HighLogic.LoadedScene == GameScenes.SPH && site.name == "Runway")
-                    SiteToggleList.setActiveToggleButton(btn);
-
+                    SiteToggleList.addActiveToggleButton(site.name, delegate(bool enabled)
+                    {
+                        LogDebugOnly("Site: {0} | Enabled: {1}", site.name, enabled);
+                        setLaunchSite(site);
+                        currentLaunchSite = site;
+                    });
+                else
+                {
+                    SiteToggleList.addToggleButton(site.name, delegate(bool enabled)
+                    {
+                        LogDebugOnly("Site: {0} | Enabled: {1}", site.name, enabled);
+                        setLaunchSite(site);
+                        currentLaunchSite = site;
+                    });
+                }
+                
             });
             LogDebugOnly("Site Button Setup Done");
             
-
-            /*
-            if ((windowPos.x == 0) && (windowPos.y == 0))//windowPos is used to position the GUI window, lets set it in the center of the screen
-            {
-                windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
-            }
-            */
-
             //centre the window
             windowPos.x = Screen.width / 2;
             windowPos.y = Screen.height / 2;
@@ -291,8 +276,8 @@ namespace KSPRemoteLaunch
     {
         private List<GUIOptionButton> buttons;
         private GUIOptionButton activeButton;
-        //private GUIStyle buttonStyle;
         private Vector2 scrollPos = new Vector2(0, 0);
+        public delegate void onSelected(bool enabled);
 
         public GUIOptionGroup()
         {
@@ -307,26 +292,25 @@ namespace KSPRemoteLaunch
             }
         }
 
-        public void addToggleButton(GUIOptionButton toggleButton)
+        public void addToggleButton(string text, onSelected action)
         {
-            buttons.Add(toggleButton);
+            buttons.Add(new GUIOptionButton(text,action));
+
         }
 
         public void setActiveToggleButton(GUIOptionButton toggleButton)
         {
             changeActiveToggleButton(toggleButton);
-            //activeButton = toggleButton;
-            //activeButton.enable();
         }
 
-        public void addActiveToggleButton(GUIOptionButton toggleButton)
+        public void addActiveToggleButton(string text, onSelected action)
         {
+            GUIOptionButton toggleButton = new GUIOptionButton(text, action);
             buttons.Add(toggleButton);
             changeActiveToggleButton(toggleButton);
-            //activeButton = toggleButton;
-            //activeButton.enable();
         }
 
+        //add GUI params?
         public void checkSelected()
         {
             scrollPos = GUILayout.BeginScrollView(scrollPos, GUI.skin.scrollView, GUILayout.Width(210.0f));
@@ -334,15 +318,11 @@ namespace KSPRemoteLaunch
             {
                 if (btn.CheckPressed() && btn != activeButton)
                 {
-                    //if not active button
-                    //then set active button to be inactive
-                    //set current button to be active
                     Debug.Log("Previous Active Button: " + activeButton);
                     activeButton.dissable();
                     btn.enable();
                     activeButton = btn;
                     Debug.Log("Current Active Button: " + activeButton);
-                    //activeButton.enable();
                 }
             }
             GUILayout.EndScrollView();
@@ -357,64 +337,56 @@ namespace KSPRemoteLaunch
             toggleButton.enable();
             activeButton = toggleButton;
         }
-        
 
+
+        internal class GUIOptionButton
+        {
+            private GUIStyle buttonStyle;
+            private string GUIText;
+            private bool enabled = false;
+            private onSelected selectedAction;
+
+            public GUIOptionButton(string text, onSelected action)
+            {
+                selectedAction = action;
+                GUIText = text;
+
+            }
+
+            public void setStyle(GUIStyle style)
+            {
+                buttonStyle = style;
+            }
+
+            
+            //Button must be enabled to be pressed
+            public bool CheckPressed()
+            {
+                if (GUILayout.Toggle(enabled, GUIText, buttonStyle, GUILayout.Width(174.0f)))
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            public void dissable()
+            {
+                enabled = false;
+            }
+            public void enable()
+            {
+                enabled = true;
+                selectedAction(enabled);
+            }
+
+            public override string ToString()
+            {
+                return GUIText;
+            }
+        }
     }
     
-    //this should be internal to OptionGroup?
-    internal class GUIOptionButton
-    {
-        private GUIStyle buttonStyle;
-        private string GUIText;
-        private bool enabled = false;
-        //private params GUILayoutOption[] options;
-        private onSelected selectedAction;
-
-        public GUIOptionButton(string text, onSelected action)
-        {
-            selectedAction = action;
-            GUIText = text;
-            
-        }
-
-        public void setStyle(GUIStyle style)
-        {
-            buttonStyle = style;
-        }
-
-        public delegate void onSelected(bool enabled);
-
-        public bool CheckPressed()
-        {
-            bool pressed = false;
-            if (GUILayout.Toggle(enabled, GUIText, buttonStyle, GUILayout.Width(174.0f)))
-            {
-                
-                //enabled = !enabled;
-                pressed = true;
-                
-                
-                
-            }
-            return pressed;
-            
-        }
-
-        public void dissable()
-        {
-            enabled = false;
-        }
-        public void enable()
-        {
-            enabled = true;
-            selectedAction(enabled);
-        }
-
-        public override string ToString() 
-        {
-            return GUIText;
-        }
-    }
+    
         
         
 
