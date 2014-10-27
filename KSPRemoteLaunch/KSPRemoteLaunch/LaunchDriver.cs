@@ -107,7 +107,7 @@ namespace KSPRemoteLaunch
             ConfigNode launchSiteSave = new ConfigNode("LaunchSites");
 
 
-            foreach (LaunchSiteExt saveSite in launchSites.FindAll(site => site.name != "LaunchPad" || site.name != "Runway"))
+            foreach (LaunchSiteExt saveSite in launchSites.FindAll(site => site.name != "LaunchPad" && site.name != "Runway"))
             {
                 ConfigNode site = new ConfigNode("LaunchSite");
                 site.AddValue("Name", saveSite.name);
@@ -165,7 +165,40 @@ namespace KSPRemoteLaunch
 
         }
 
-        
+        public static void deleteLaunchSite(LaunchSiteExt siteToDelete)
+        {
+            //we should get a list of the default launch sites incase they change!
+            if (siteToDelete.name == "LaunchPad" || siteToDelete.name == "Runway")
+                throw new Exception("Can't delete default launch sites!");
+
+            foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                if (fi.FieldType.Name == "LaunchSite[]")
+                {
+                    PSystemSetup.LaunchSite[] sites = (PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance);
+                    if (PSystemSetup.Instance.GetLaunchSite(siteToDelete.name) != null) //logs 'Can not find launch site' to console 
+                    {
+                        PSystemSetup.LaunchSite[] newSites = new PSystemSetup.LaunchSite[sites.Length - 1];
+                        for(int i = 0; i < sites.Length; i++)
+                        {
+                            if(sites[i].name != siteToDelete.name)
+                                newSites[i] = sites[i];
+                        }
+                        fi.SetValue(PSystemSetup.Instance, newSites);
+                    }
+                    else
+                        throw new Exception("Site not found!");
+                }
+                
+            }
+
+            //object that defines launch site - created during creation logic
+            GameObject.Destroy(siteToDelete.launchPadTransform.parent.gameObject);
+            
+            launchSites.Remove(siteToDelete);
+            SaveLaunchSites();
+        }
+
         public static void UpdateLaunchSite(LaunchSiteExt site)
         {
             //Can't use this on defualt launch sites
@@ -214,7 +247,7 @@ namespace KSPRemoteLaunch
                 visibleRange = visibleRange
             };
 
-
+            
             PQSCity launchPQS;
             launchPQS = site.launchPadTransform.parent.GetComponent<PQSCity>();
             LogDebugOnly("Added PQSCity to gameobject");
@@ -239,6 +272,8 @@ namespace KSPRemoteLaunch
             launchPQS.OnSetup();
             launchPQS.Orientate();
             LogDebugOnly("Setup PQSCity");
+
+            
 
         }
 
@@ -355,7 +390,7 @@ namespace KSPRemoteLaunch
                             Debug.Log("Org PQS Name: " + sites[i].pqsName);
                             newSites[i] = sites[i];
                         }
-                        newSites[newSites.Length - 1] = newSite;
+                        newSites[newSites.Length - 1] = (PSystemSetup.LaunchSite)newSite;
                         fi.SetValue(PSystemSetup.Instance, newSites);
                         sites = newSites;
                         
@@ -399,7 +434,6 @@ namespace KSPRemoteLaunch
         public double lat;
         public double lon;
         public string body;
-
 
     }
 

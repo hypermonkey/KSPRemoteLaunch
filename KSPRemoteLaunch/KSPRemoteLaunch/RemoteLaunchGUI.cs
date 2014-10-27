@@ -118,7 +118,19 @@ namespace KSPRemoteLaunch
                         LogDebugOnly("Site: {0} | Enabled: {1}",newSite.name, enabled);
                         setLaunchSite(newSite);
                         currentLaunchSite = newSite;
-                            
+
+                    }, delegate()
+                    {
+                        try
+                        {
+                            LaunchDriver.deleteLaunchSite(newSite);
+                        }
+                        catch(Exception e)
+                        {
+                            LogDebugOnly(e.Message);
+                            result = e.Message;
+                            throw e;
+                        }
                     });
                     //move this to LaunchDriver.CreateCustomLaunchSite
                     LaunchDriver.SaveLaunchSite(newSite);
@@ -154,6 +166,11 @@ namespace KSPRemoteLaunch
             }
 
 #endif
+            if (GUILayout.Button("Delete", buttonSty, GUILayout.ExpandWidth(true)))
+            {
+                SiteToggleList.deleteActiveButton();
+            }
+            
 
             if (GUILayout.Button("Clear Fields", buttonSty,GUILayout.ExpandWidth(true)))
             {
@@ -215,6 +232,17 @@ namespace KSPRemoteLaunch
                         LogDebugOnly("Site: {0} | Enabled: {1}", site.name, enabled);
                         setLaunchSite(site);
                         currentLaunchSite = site;
+                    }, delegate() {
+                        try
+                        {
+                            LaunchDriver.deleteLaunchSite(site);
+                        }
+                        catch (Exception e)
+                        {
+                            LogDebugOnly(e.Message);
+                            result = e.Message;
+                            throw e;
+                        }
                     });
                 else
                 {
@@ -223,6 +251,18 @@ namespace KSPRemoteLaunch
                         LogDebugOnly("Site: {0} | Enabled: {1}", site.name, enabled);
                         setLaunchSite(site);
                         currentLaunchSite = site;
+                    }, delegate()
+                    {
+                        try
+                        {
+                            LaunchDriver.deleteLaunchSite(site);
+                        }
+                        catch (Exception e)
+                        {
+                            LogDebugOnly(e.Message);
+                            result = e.Message;
+                            throw e;
+                        }
                     });
                 }
                 
@@ -278,6 +318,7 @@ namespace KSPRemoteLaunch
         private GUIOptionButton activeButton;
         private Vector2 scrollPos = new Vector2(0, 0);
         public delegate void onSelected(bool enabled);
+        public delegate void onDelete();
 
         public GUIOptionGroup()
         {
@@ -291,10 +332,15 @@ namespace KSPRemoteLaunch
                 btn.setStyle(style);
             }
         }
-
-        public void addToggleButton(string text, onSelected action)
+        public void deleteActiveButton()
         {
-            buttons.Add(new GUIOptionButton(text,action));
+            activeButton.delete();
+            buttons.Remove(activeButton);
+        }
+
+        public void addToggleButton(string text, onSelected action, onDelete delAction)
+        {
+            buttons.Add(new GUIOptionButton(text, action, delAction));
 
         }
 
@@ -303,9 +349,9 @@ namespace KSPRemoteLaunch
             changeActiveToggleButton(toggleButton);
         }
 
-        public void addActiveToggleButton(string text, onSelected action)
+        public void addActiveToggleButton(string text, onSelected action, onDelete delAction)
         {
-            GUIOptionButton toggleButton = new GUIOptionButton(text, action);
+            GUIOptionButton toggleButton = new GUIOptionButton(text, action, delAction);
             buttons.Add(toggleButton);
             changeActiveToggleButton(toggleButton);
         }
@@ -345,10 +391,12 @@ namespace KSPRemoteLaunch
             private string GUIText;
             private bool enabled = false;
             private onSelected selectedAction;
+            private onDelete deleteAction;
 
-            public GUIOptionButton(string text, onSelected action)
+            public GUIOptionButton(string text, onSelected action, onDelete delAction)
             {
                 selectedAction = action;
+                deleteAction = delAction;
                 GUIText = text;
 
             }
@@ -377,6 +425,11 @@ namespace KSPRemoteLaunch
             {
                 enabled = true;
                 selectedAction(enabled);
+            }
+
+            public void delete()
+            {
+                deleteAction();
             }
 
             public override string ToString()
