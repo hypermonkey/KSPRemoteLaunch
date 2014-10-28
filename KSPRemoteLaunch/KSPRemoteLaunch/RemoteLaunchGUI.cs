@@ -14,21 +14,23 @@ namespace KSPRemoteLaunch
     {
         //windowPos is used to position the GUI window, lets set it in the center of the screen
         protected Rect windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
-        private string latText = "0.0";
-        private string lonText = "0.0";
-        private string launchText = "";
-        private string descText = "";
-        private string planetText = "";
+        private static string latText = "0.0";
+        private static string lonText = "0.0";
+        private static string launchText = "";
+        private static string descText = "";
+        private static string planetText = "";
         //private Vector2 scrollPos = new Vector2(0, 0);
 
-        private double lat = 0;
-        private double lon = 0;
-        private double height = 0.5;
-        private bool windowActive = false;
-        private string result = "";
+        private static double lat = 0;
+        private static double lon = 0;
+        private static double height = 0.5;
+        private static bool windowActive = false;
+        private static string result = "";
         //private List<GUIToggleButton> SiteToggleList;
-        private GUIOptionGroup SiteToggleList;
-        private LaunchSiteExt currentLaunchSite = null;
+        private static GUIOptionGroup SiteToggleList;
+        private static LaunchSiteExt currentLaunchSite = null;
+
+        private static bool hasRunOnce = false;
 
         private void WindowGUI(int windowID)
         {
@@ -220,7 +222,17 @@ namespace KSPRemoteLaunch
 
         void Start()
         {
-            
+            if (hasRunOnce)
+            {
+
+                RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open GUI
+
+                //KSP will always revert to the default site for the selected editor
+                setLaunchSite(currentLaunchSite);
+                return;
+            }
+
+            hasRunOnce = true;
 
             SiteToggleList = new GUIOptionGroup();
             
