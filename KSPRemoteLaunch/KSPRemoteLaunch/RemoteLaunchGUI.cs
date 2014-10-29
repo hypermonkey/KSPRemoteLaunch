@@ -149,6 +149,14 @@ namespace KSPRemoteLaunch
 
             if (GUILayout.Button("Update", buttonSty, GUILayout.ExpandWidth(true)))
             {
+                LogDebugOnly("-------Begin Update----------");
+                LogDebugOnly(currentLaunchSite.name);
+                
+                string oldplanetText = currentLaunchSite.body;
+                string olddescText = currentLaunchSite.description;
+                double oldlatText = currentLaunchSite.lat;
+                double oldlonText = currentLaunchSite.lon;
+                string oldlaunchText = currentLaunchSite.name;
                 try
                 {
                     currentLaunchSite.body = planetText;
@@ -162,8 +170,23 @@ namespace KSPRemoteLaunch
                 }
                 catch(Exception e)
                 {
+
+                    currentLaunchSite.body = oldplanetText;
+                    currentLaunchSite.description = olddescText;
+                    currentLaunchSite.lat = oldlatText;
+                    currentLaunchSite.lon = oldlonText;
+                    currentLaunchSite.name = oldlaunchText;
+
+                    
+                    planetText = currentLaunchSite.body;
+                    descText = currentLaunchSite.description;
+                    latText = currentLaunchSite.lat.ToString();
+                    lonText = currentLaunchSite.lon.ToString();
+                    launchText = currentLaunchSite.name;
+
                     LogDebugOnly(e.Message);
                     result = e.Message;
+
                 }
             }
 
