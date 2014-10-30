@@ -151,32 +151,37 @@ namespace KSPRemoteLaunch
             {
                 LogDebugOnly("-------Begin Update----------");
                 LogDebugOnly(currentLaunchSite.name);
-                
+                /*
                 string oldplanetText = currentLaunchSite.body;
                 string olddescText = currentLaunchSite.description;
                 double oldlatText = currentLaunchSite.lat;
                 double oldlonText = currentLaunchSite.lon;
                 string oldlaunchText = currentLaunchSite.name;
+                */
                 try
                 {
+
+                    currentLaunchSite.setValues(launchText, descText, planetText, double.Parse(latText),double.Parse(lonText));
+                    /*
                     currentLaunchSite.body = planetText;
                     currentLaunchSite.description = descText;
                     currentLaunchSite.lat = double.Parse(latText);
                     currentLaunchSite.lon = double.Parse(lonText);
                     currentLaunchSite.name = launchText;
+                    */
                     LaunchDriver.UpdateLaunchSite(currentLaunchSite);
                     //move this into update?
                     LaunchDriver.SaveLaunchSite(currentLaunchSite);
                 }
                 catch(Exception e)
                 {
-
+                    /*
                     currentLaunchSite.body = oldplanetText;
                     currentLaunchSite.description = olddescText;
                     currentLaunchSite.lat = oldlatText;
                     currentLaunchSite.lon = oldlonText;
                     currentLaunchSite.name = oldlaunchText;
-
+                    */
                     
                     planetText = currentLaunchSite.body;
                     descText = currentLaunchSite.description;

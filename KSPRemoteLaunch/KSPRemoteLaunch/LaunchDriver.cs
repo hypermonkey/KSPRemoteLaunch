@@ -201,6 +201,7 @@ namespace KSPRemoteLaunch
 
         public static void UpdateLaunchSite(LaunchSiteExt site)
         {
+            /*
             //Can't use this on defualt launch sites
             if (site.name == "LaunchPad" || site.name == "Runway")
                 throw new Exception("Can't edit default launch sites!");
@@ -234,7 +235,10 @@ namespace KSPRemoteLaunch
                 throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
                 //return;
             }
-            
+            */
+            CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == site.body);
+            Vector3 position = body.GetRelSurfaceNVector(site.lat, site.lon); //radial vector indicating position
+
             Vector3 orientation = Vector3.up;
             float rotation = 0; //Don't know how to work this out from vessel rotation.
             float visibleRange = 5000;
@@ -279,7 +283,7 @@ namespace KSPRemoteLaunch
 
         public static LaunchSiteExt CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName,string description)
         {
-            
+            /*
             //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
             LogDebugOnly("Remainder: " + (lat % 180.0d));
             if ((lat % 180.0d) % 90.0d == 0 && lat != 0)
@@ -313,9 +317,20 @@ namespace KSPRemoteLaunch
                 throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
                 //return;
             }
-                
+            */
 
-            
+            LaunchSiteExt newSite = new LaunchSiteExt();
+            newSite.setValues(siteName,description,body.name,lat,lon);
+
+            GameObject obj;
+            GameObject g = new GameObject("VoidModel_spawn");//the actual transform used
+            obj = new GameObject(siteName);
+            g.GetComponent<Transform>().parent = obj.transform;
+            LogDebugOnly("Created gameobject");
+
+            Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
+
+            string siteTransform = "VoidModel_spawn";
 
             Vector3 orientation = Vector3.up;
             float rotation = 0; //Don't know how to work this out from vessel rotation.
@@ -359,7 +374,7 @@ namespace KSPRemoteLaunch
             
             LogDebugOnly("Creating custom launch site");
             //PSystemSetup.LaunchSite newSite = null;
-            LaunchSiteExt newSite = null;
+            
             //this code is copied from kerbtown
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
@@ -369,7 +384,7 @@ namespace KSPRemoteLaunch
                     if (PSystemSetup.Instance.GetLaunchSite(siteName) == null) //logs 'Can not find launch site' to console 
                     {
                         //PSystemSetup.LaunchSite newSite = new PSystemSetup.LaunchSite();
-                        newSite = new LaunchSiteExt();
+                        //newSite = new LaunchSiteExt();
                         newSite.launchPadName = siteName + "/" + siteTransform; //is siteTransform nessesary?
                         Debug.Log("Launch Pad Name: " + newSite.launchPadName);
                         newSite.name = siteName;
@@ -434,6 +449,51 @@ namespace KSPRemoteLaunch
         public double lat;
         public double lon;
         public string body;
+
+        public void setValues(string newName, string newDesc, string newBody, double newLat, double newLon)
+        {
+            //Can't use this on defualt launch sites
+            if (this.name == "LaunchPad" || this.name == "Runway")
+                throw new Exception("Can't edit default launch sites!");
+
+            //throws exception if a body is not found
+            CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == newBody);
+
+            //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
+            //Validity checks should be moved into LaunchSiteExt class
+            //LogDebugOnly("Remainder: " + (site.lat % 180.0d));
+            if ((newLat % 180.0d) % 90.0d == 0 && newLat != 0)
+                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites to Poles!");
+
+            //Game bugs out if a launch site has no name
+            if (newName.Equals(""))
+                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Launch Site must have a name!");
+
+
+            Vector3 position = body.GetRelSurfaceNVector(newLat, newLon); //radial vector indicating position
+            double altitude = body.pqsController.GetSurfaceHeight(position) - body.Radius;
+
+            //LogDebugOnly("Altitude: {0}", altitude);
+
+            if (altitude < 0)//then launchsite is underwater
+            {
+                //LogDebugOnly("Warning: Launch Site {0} Under Water", site.name);
+                //we can't force the game to place the vessel above water when launching.
+                //use orbit alteration methods to move vessel above water???
+                //LogDebugOnly("Launch Site {0} not created!", site.name);
+                //need to add GUI message here
+                //change method type from void to bool?
+                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
+                //return;
+            }
+
+            this.name = newName;
+            this.lat = newLat;
+            this.lon = newLon;
+            this.body = newBody;
+            this.description = newDesc;
+
+        }
 
     }
 
