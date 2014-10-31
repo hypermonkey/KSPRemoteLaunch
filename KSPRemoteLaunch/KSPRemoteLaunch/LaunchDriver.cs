@@ -74,7 +74,7 @@ namespace KSPRemoteLaunch
                     launchSites.Add(LaunchPad);
                     launchSites.Add(Runway);
 
-                    LoadLaunchSites();
+                    loadLaunchSites();
                     LogDebugOnly("Sites Added");
 
                     firstTime = false;
@@ -82,7 +82,7 @@ namespace KSPRemoteLaunch
             }
         }
 
-        private static void LoadLaunchSites()
+        private static void loadLaunchSites()
         {
             LogDebugOnly("Loading Launch Sites");
             ConfigNode launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
@@ -102,7 +102,7 @@ namespace KSPRemoteLaunch
 
         }
 
-        private static void SaveLaunchSites()
+        private static void saveLaunchSites()
         {
             ConfigNode launchSiteSave = new ConfigNode("LaunchSites");
 
@@ -123,7 +123,7 @@ namespace KSPRemoteLaunch
 
         }
 
-        public static void SaveLaunchSite(LaunchSiteExt site)
+        public static void saveLaunchSite(LaunchSiteExt site)
         {
             ConfigNode launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
             if (launchSiteLoad == null)
@@ -156,7 +156,7 @@ namespace KSPRemoteLaunch
             launchSiteLoad.Save(SavePath + SaveFile);
         }
 
-        public static void SetLaunchSite(String siteName) 
+        public static void setLaunchSite(String siteName) 
         {
             if (PSystemSetup.Instance.GetLaunchSite(siteName) != null)
                 EditorLogic.fetch.launchSiteName = siteName;
@@ -196,52 +196,27 @@ namespace KSPRemoteLaunch
             GameObject.Destroy(siteToDelete.launchPadTransform.parent.gameObject);
             
             launchSites.Remove(siteToDelete);
-            SaveLaunchSites();
+            saveLaunchSites();
         }
 
-        public static void UpdateLaunchSite(LaunchSiteExt site)
+        public static void updateLaunchSite(LaunchSiteExt site, string siteName,string description,string planet,double lat, double lon)
         {
-            /*
-            //Can't use this on defualt launch sites
-            if (site.name == "LaunchPad" || site.name == "Runway")
-                throw new Exception("Can't edit default launch sites!");
+            //make sure it exists before we try to edit it
+            launchSites.Single<LaunchSiteExt>(l => l == site);
+
+            setValues(siteName, description, planet, lat, lon, site);
 
             CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == site.body);
 
-            //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
-            //Validity checks should be moved into LaunchSiteExt class
-            LogDebugOnly("Remainder: " + (site.lat % 180.0d));
-            if ((site.lat % 180.0d) % 90.0d == 0 && site.lat != 0)
-                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites to Poles!");
-
-            //Game bugs out if a launch site has no name
-            if (site.name.Equals(""))
-                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Launch Site must have a name!");
-
+            
 
             Vector3 position = body.GetRelSurfaceNVector(site.lat, site.lon); //radial vector indicating position
             double altitude = body.pqsController.GetSurfaceHeight(position) - body.Radius;
 
-            LogDebugOnly("Altitude: {0}", altitude);
-
-            if (altitude < 0)//then launchsite is underwater
-            {
-                LogDebugOnly("Warning: Launch Site {0} Under Water",site.name);
-                //we can't force the game to place the vessel above water when launching.
-                //use orbit alteration methods to move vessel above water???
-                LogDebugOnly("Launch Site {0} not created!",site.name);
-                //need to add GUI message here
-                //change method type from void to bool?
-                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
-                //return;
-            }
-            */
-            CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == site.body);
-            Vector3 position = body.GetRelSurfaceNVector(site.lat, site.lon); //radial vector indicating position
-
             Vector3 orientation = Vector3.up;
             float rotation = 0; //Don't know how to work this out from vessel rotation.
             float visibleRange = 5000;
+            
             LogDebugOnly("Set location variables");
             
             PQSCity.LODRange range = new PQSCity.LODRange
@@ -253,23 +228,30 @@ namespace KSPRemoteLaunch
 
             
             PQSCity launchPQS;
-            launchPQS = site.launchPadTransform.parent.GetComponent<PQSCity>();
+            launchPQS = site.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
+            //UnityEngine.Object.Destroy(launchPQS);
+            //launchPQS = site.launchPadTransform.parent.gameObject.AddComponent<PQSCity>();
+
             LogDebugOnly("Added PQSCity to gameobject");
             launchPQS.lod = new[] { range };
             launchPQS.frameDelta = 1; //Unknown
-            launchPQS.repositionToSphere = true; //enable repositioning to sphere and use RadiusOffset as altitude
-            launchPQS.repositionToSphereSurface = false; //Snap to surface
-            launchPQS.repositionToSphereSurfaceAddHeight =false;//add RadiusOffset to surfaceHeight when using ToSphereSurface
+            launchPQS.repositionToSphere = false; //enable repositioning to sphere and use RadiusOffset as altitude
+            launchPQS.repositionToSphereSurface = true; //Snap to surface
+            launchPQS.repositionToSphereSurfaceAddHeight =true;//add RadiusOffset to surfaceHeight when using ToSphereSurface
             launchPQS.repositionRadial = position; //position
-            //launchPQS.repositionRadiusOffset = altitude; //height from surface
-            launchPQS.repositionRadiusOffset = 0.0d;//safety distance
+            launchPQS.repositionRadiusOffset = 100.0d; //height from surface
+            //launchPQS.repositionRadiusOffset = 1250.0d;//safety distance
             launchPQS.reorientInitialUp = orientation; //orientation
             launchPQS.reorientFinalAngle = rotation; //rotation x axis
             launchPQS.reorientToSphere = true; //adjust rotations to match the direction of gravity
             
             LogDebugOnly("Set PQSCity variables");
 
-            //obj.transform.parent = body.pqsController.transform;
+            GameObject obj = site.launchPadTransform.parent.gameObject;
+            obj.name = site.name;
+            obj.transform.parent = body.pqsController.transform;
+
+
             launchPQS.sphere = body.pqsController;
             launchPQS.order = 100;
             launchPQS.modEnabled = true;
@@ -277,59 +259,33 @@ namespace KSPRemoteLaunch
             launchPQS.Orientate();
             LogDebugOnly("Setup PQSCity");
 
+
+            MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupLaunchSites", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (updateSitesMI == null)
+            {
+                LogDebugOnly("Fail to find SetupLaunchSites().");
+                throw new Exception("Fatal Error - Can't find method SetupLaunchSites().");
+            }
+            else
+                updateSitesMI.Invoke(PSystemSetup.Instance, null);
             
 
         }
 
         public static LaunchSiteExt CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName,string description)
         {
-            /*
-            //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
-            LogDebugOnly("Remainder: " + (lat % 180.0d));
-            if ((lat % 180.0d) % 90.0d == 0 && lat != 0)
-                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites to Poles!");
-
-            //Game bugs out if a launch site has no name
-            if (siteName.Equals(""))
-                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Launch Site must have a name!");
+            
+            LaunchSiteExt newSite = new LaunchSiteExt();
+            setValues(siteName, description, body.name, lat, lon, newSite);
 
             GameObject obj;
             GameObject g = new GameObject("VoidModel_spawn");//the actual transform used
             obj = new GameObject(siteName);
             g.GetComponent<Transform>().parent = obj.transform;
             LogDebugOnly("Created gameobject");
-            
-            string siteTransform = "VoidModel_spawn";
 
             Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
             double altitude = body.pqsController.GetSurfaceHeight(position) - body.Radius;
-
-            LogDebugOnly("Altitude: {0}", altitude);
-
-            if (altitude < 0)//then launchsite is underwater
-            {
-                LogDebugOnly("Warning: Launch Site {0} Under Water",siteName);
-                //we can't force the game to place the vessel above water when launching.
-                //use orbit alteration methods to move vessel above water???
-                LogDebugOnly("Launch Site {0} not created!",siteName);
-                //need to add GUI message here
-                //change method type from void to bool?
-                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
-                //return;
-            }
-            */
-
-            LaunchSiteExt newSite = new LaunchSiteExt();
-            newSite.setValues(siteName,description,body.name,lat,lon);
-
-            GameObject obj;
-            GameObject g = new GameObject("VoidModel_spawn");//the actual transform used
-            obj = new GameObject(siteName);
-            g.GetComponent<Transform>().parent = obj.transform;
-            LogDebugOnly("Created gameobject");
-
-            Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
-
             string siteTransform = "VoidModel_spawn";
 
             Vector3 orientation = Vector3.up;
@@ -344,19 +300,18 @@ namespace KSPRemoteLaunch
                 visibleRange = visibleRange
             };
 
-
             PQSCity launchPQS;
             
             launchPQS = obj.AddComponent<PQSCity>(); //Adds a PQSCity to the game object - appears to put it into the PQS[] in PSystemSetup
             LogDebugOnly("Added PQSCity to gameobject");
             launchPQS.lod = new[] { range };
-            launchPQS.frameDelta = 1; //Unknown
+            launchPQS.frameDelta = 2; //Unknown
             launchPQS.repositionToSphere = false; //enable repositioning to sphere and use RadiusOffset as altitude
             launchPQS.repositionToSphereSurface = true; //Snap to surface
             launchPQS.repositionToSphereSurfaceAddHeight = true;//add RadiusOffset to surfaceHeight when using ToSphereSurface
             launchPQS.repositionRadial = position; //position
-            //launchPQS.repositionRadiusOffset = altitude; //height from surface
-            launchPQS.repositionRadiusOffset = 5.0d;//safety distance
+            launchPQS.repositionRadiusOffset = 100.0d;//altitude + 10.0d; //height from surface
+            //launchPQS.repositionRadiusOffset = 0.0d;//safety distance
             launchPQS.reorientInitialUp = orientation; //orientation
             launchPQS.reorientFinalAngle = rotation; //rotation x axis
             launchPQS.reorientToSphere = true; //adjust rotations to match the direction of gravity
@@ -381,41 +336,32 @@ namespace KSPRemoteLaunch
                 if (fi.FieldType.Name == "LaunchSite[]")
                 {
                     PSystemSetup.LaunchSite[] sites = (PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance);
-                    if (PSystemSetup.Instance.GetLaunchSite(siteName) == null) //logs 'Can not find launch site' to console 
+                    
+                    //PSystemSetup.LaunchSite newSite = new PSystemSetup.LaunchSite();
+                    //newSite = new LaunchSiteExt();
+                    //newSite.launchPadName = siteName + "/" + siteTransform; //is siteTransform nessesary?
+                    //Debug.Log("Launch Pad Name: " + newSite.launchPadName);
+                    //newSite.name = siteName;
+                    //newSite.description = description;
+                    //newSite.pqsName = body.bodyName;
+                    //newSite.lat = lat;
+                    //newSite.lon = lon;
+                    //newSite.body = body.name;
+                    Debug.Log("PQS Name: " + newSite.pqsName);
+                    
+                    PSystemSetup.LaunchSite[] newSites = new PSystemSetup.LaunchSite[sites.Length + 1];
+                    for (int i = 0; i < sites.Length; ++i)
                     {
-                        //PSystemSetup.LaunchSite newSite = new PSystemSetup.LaunchSite();
-                        //newSite = new LaunchSiteExt();
-                        newSite.launchPadName = siteName + "/" + siteTransform; //is siteTransform nessesary?
-                        Debug.Log("Launch Pad Name: " + newSite.launchPadName);
-                        newSite.name = siteName;
-                        newSite.description = description;
-                        newSite.pqsName = body.bodyName;
-
-                        newSite.lat = lat;
-                        newSite.lon = lon;
-                        newSite.body = body.name;
-
-                        Debug.Log("PQS Name: " + newSite.pqsName);
-
-                        PSystemSetup.LaunchSite[] newSites = new PSystemSetup.LaunchSite[sites.Length + 1];
-                        for (int i = 0; i < sites.Length; ++i)
-                        {
-                            Debug.Log("Org Name: " + sites[i].name);
-                            Debug.Log("Org Launch Pad Name: " + sites[i].launchPadName);
-                            Debug.Log("Org PQS Name: " + sites[i].pqsName);
-                            newSites[i] = sites[i];
-                        }
-                        newSites[newSites.Length - 1] = (PSystemSetup.LaunchSite)newSite;
-                        fi.SetValue(PSystemSetup.Instance, newSites);
-                        sites = newSites;
-                        
-                        Debug.Log("Created launch site \"" + newSite.name + "\" with transform " + newSite.launchPadName);
+                        //Debug.Log("Org Name: " + sites[i].name);
+                        //Debug.Log("Org Launch Pad Name: " + sites[i].launchPadName);
+                        //Debug.Log("Org PQS Name: " + sites[i].pqsName);
+                        newSites[i] = sites[i];
                     }
-                    else
-                    {
-                        Debug.Log("Launch site " + siteName + " already exists");
-                        throw new Exception("Launch Site '" + siteName + "' already exists");
-                    }
+                    newSites[newSites.Length - 1] = (PSystemSetup.LaunchSite)newSite;
+                    fi.SetValue(PSystemSetup.Instance, newSites);
+                    //sites = newSites;
+                    Debug.Log("Created launch site \"" + newSite.name + "\" with transform " + newSite.launchPadName);
+                    
                 }
             }
 
@@ -441,19 +387,14 @@ namespace KSPRemoteLaunch
             return launchSites;
         }
 
-    }
-
-    public class LaunchSiteExt: PSystemSetup.LaunchSite
-    {
-        public string description;
-        public double lat;
-        public double lon;
-        public string body;
-
-        public void setValues(string newName, string newDesc, string newBody, double newLat, double newLon)
+        private static void setValues(string newName, string newDesc, string newBody, double newLat, double newLon, LaunchSiteExt site)
         {
+
+            if (PSystemSetup.Instance.GetLaunchSite(newName) != null && site.name != newName)//logs 'Can not find launch site' to console when null
+                throw new Exception("Launch Site '" + newName + "' already exists");
+
             //Can't use this on defualt launch sites
-            if (this.name == "LaunchPad" || this.name == "Runway")
+            if (site.name == "LaunchPad" || site.name == "Runway")
                 throw new Exception("Can't edit default launch sites!");
 
             //throws exception if a body is not found
@@ -477,23 +418,29 @@ namespace KSPRemoteLaunch
 
             if (altitude < 0)//then launchsite is underwater
             {
-                //LogDebugOnly("Warning: Launch Site {0} Under Water", site.name);
-                //we can't force the game to place the vessel above water when launching.
-                //use orbit alteration methods to move vessel above water???
-                //LogDebugOnly("Launch Site {0} not created!", site.name);
-                //need to add GUI message here
-                //change method type from void to bool?
                 throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
-                //return;
             }
 
-            this.name = newName;
-            this.lat = newLat;
-            this.lon = newLon;
-            this.body = newBody;
-            this.description = newDesc;
+            site.name = newName;
+            site.lat = newLat;
+            site.lon = newLon;
+            site.body = newBody;
+            site.pqsName = newBody;
+            site.description = newDesc;
+            site.launchPadName = newName + "/" + "VoidModel_spawn";
 
         }
+
+    }
+
+    public class LaunchSiteExt: PSystemSetup.LaunchSite
+    {
+        public string description;
+        public double lat;
+        public double lon;
+        public string body;
+
+        
 
     }
 

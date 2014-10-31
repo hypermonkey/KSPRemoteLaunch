@@ -13,7 +13,7 @@ namespace KSPRemoteLaunch
     public class RemoteLaunchGUI:MonoBehaviourExtended
     {
         //windowPos is used to position the GUI window, lets set it in the center of the screen
-        protected Rect windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
+        private static Rect windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
         private static string latText = "0.0";
         private static string lonText = "0.0";
         private static string launchText = "";
@@ -99,7 +99,7 @@ namespace KSPRemoteLaunch
             descText = GUILayout.TextArea(descText, textSty, totalColWidth);//, GUILayout.ExpandHeight(true));
 
             GUILayout.BeginHorizontal();
-#if DEBUG
+
             if (GUILayout.Button("Add", buttonSty, GUILayout.ExpandWidth(true)))//, GUILayout.ExpandWidth(true)))
             {
                 try
@@ -135,7 +135,7 @@ namespace KSPRemoteLaunch
                         }
                     });
                     //move this to LaunchDriver.CreateCustomLaunchSite
-                    LaunchDriver.SaveLaunchSite(newSite);
+                    LaunchDriver.saveLaunchSite(newSite);
                     
                 }
                 catch(Exception e)
@@ -151,38 +151,16 @@ namespace KSPRemoteLaunch
             {
                 LogDebugOnly("-------Begin Update----------");
                 LogDebugOnly(currentLaunchSite.name);
-                /*
-                string oldplanetText = currentLaunchSite.body;
-                string olddescText = currentLaunchSite.description;
-                double oldlatText = currentLaunchSite.lat;
-                double oldlonText = currentLaunchSite.lon;
-                string oldlaunchText = currentLaunchSite.name;
-                */
+
                 try
                 {
 
-                    currentLaunchSite.setValues(launchText, descText, planetText, double.Parse(latText),double.Parse(lonText));
-                    /*
-                    currentLaunchSite.body = planetText;
-                    currentLaunchSite.description = descText;
-                    currentLaunchSite.lat = double.Parse(latText);
-                    currentLaunchSite.lon = double.Parse(lonText);
-                    currentLaunchSite.name = launchText;
-                    */
-                    LaunchDriver.UpdateLaunchSite(currentLaunchSite);
+                    LaunchDriver.updateLaunchSite(currentLaunchSite, launchText, descText, planetText, double.Parse(latText), double.Parse(lonText));
                     //move this into update?
-                    LaunchDriver.SaveLaunchSite(currentLaunchSite);
+                    LaunchDriver.saveLaunchSite(currentLaunchSite);
                 }
                 catch(Exception e)
                 {
-                    /*
-                    currentLaunchSite.body = oldplanetText;
-                    currentLaunchSite.description = olddescText;
-                    currentLaunchSite.lat = oldlatText;
-                    currentLaunchSite.lon = oldlonText;
-                    currentLaunchSite.name = oldlaunchText;
-                    */
-                    
                     planetText = currentLaunchSite.body;
                     descText = currentLaunchSite.description;
                     latText = currentLaunchSite.lat.ToString();
@@ -195,7 +173,6 @@ namespace KSPRemoteLaunch
                 }
             }
 
-#endif
             if (GUILayout.Button("Delete", buttonSty, GUILayout.ExpandWidth(true)))
             {
                 SiteToggleList.deleteActiveButton();
@@ -223,7 +200,7 @@ namespace KSPRemoteLaunch
         {
             try
             {
-                LaunchDriver.SetLaunchSite(site.name);
+                LaunchDriver.setLaunchSite(site.name);
                 descText = site.description;
                 latText = site.lat.ToString();
                 lonText = site.lon.ToString();
