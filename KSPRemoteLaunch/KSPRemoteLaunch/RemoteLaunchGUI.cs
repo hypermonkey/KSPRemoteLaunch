@@ -14,23 +14,72 @@ namespace KSPRemoteLaunch
     {
         //windowPos is used to position the GUI window, lets set it in the center of the screen
         private static Rect windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
+        private static Rect errorWindowPos = new Rect(Screen.width / 2 - 125, Screen.height / 2 -50, 10, 10);
         private static string latText = "0.0";
         private static string lonText = "0.0";
         private static string launchText = "";
         private static string descText = "";
         private static string planetText = "";
+        private static bool showGUI = true;
         //private Vector2 scrollPos = new Vector2(0, 0);
 
         private static double lat = 0;
         private static double lon = 0;
-        private static double height = 0.5;
+        //private static double height = 0.5;
         private static bool windowActive = false;
-        private static string result = "";
+        //private static string result = "";
         //private List<GUIToggleButton> SiteToggleList;
         private static GUIOptionGroup SiteToggleList;
         private static LaunchSiteExt currentLaunchSite = null;
 
         private static bool hasRunOnce = false;
+
+        private static bool errorWindowActive = false;
+        private static string errorMessage = "";
+        private void ErrorWindowGUI(int errorWindowID)
+        {
+            GUIStyle buttonSty = new GUIStyle(GUI.skin.button);
+            buttonSty.normal.textColor = buttonSty.focused.textColor = Color.white;
+            buttonSty.hover.textColor = buttonSty.active.textColor = Color.yellow;
+            buttonSty.onNormal.textColor = buttonSty.onFocused.textColor = buttonSty.onHover.textColor = buttonSty.onActive.textColor = Color.green;
+            buttonSty.padding = new RectOffset(8, 8, 8, 8);
+
+            GUIStyle labelSty = new GUIStyle(GUI.skin.label);
+            labelSty.normal.textColor = buttonSty.focused.textColor = Color.white;
+            labelSty.padding = new RectOffset(8, 8, 8, 8);
+
+
+            GUI.DragWindow(new Rect(0, 0, 300, 30));
+
+            GUILayout.Label(errorMessage, labelSty, GUILayout.Width(250.0f),GUILayout.ExpandHeight(true));
+
+
+            if (GUILayout.Button("OK", buttonSty, GUILayout.ExpandWidth(true)))
+            {
+                RenderingManager.RemoveFromPostDrawQueue(4, new Callback(drawErrorGUI)); //close the GUI
+                RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open the GUI
+                errorWindowActive = false;
+                windowActive = true;
+            }
+        }
+
+        private void drawErrorGUI()
+        {
+            GUI.skin = HighLogic.Skin;
+            errorWindowActive = true;
+            //windowPos = GUILayout.Window(1, windowPos, WindowGUI, "Remote Launch", GUILayout.MinWidth(250), GUILayout.MinHeight(150));
+            errorWindowPos = GUILayout.Window(2, errorWindowPos, ErrorWindowGUI, "Error");
+        }
+
+        private void raiseError(string message)
+        {
+            errorMessage = message;
+            RenderingManager.AddToPostDrawQueue(4, new Callback(drawErrorGUI));//open the GUI
+            RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
+            windowActive = false;
+            errorWindowActive = true;
+
+        }
 
         private void WindowGUI(int windowID)
         {
@@ -94,7 +143,7 @@ namespace KSPRemoteLaunch
             lonText = GUILayout.TextField(lonText, textSty, textColWidth);//, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
 
-            GUILayout.Label("Result: " + result, labelSty,totalColWidth);//, GUILayout.ExpandWidth(true));
+            //GUILayout.Label("Result: " + result, labelSty,totalColWidth);//, GUILayout.ExpandWidth(true));
 
             descText = GUILayout.TextArea(descText, textSty, totalColWidth);//, GUILayout.ExpandHeight(true));
 
@@ -114,7 +163,7 @@ namespace KSPRemoteLaunch
                     LaunchSiteExt newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, planet, launchText, descText);
 
                     //result = "Site '" + launchText + "' created!";
-                    result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
+                    //result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
 
                     SiteToggleList.addActiveToggleButton(launchText, delegate(bool enabled) {
                         LogDebugOnly("Site: {0} | Enabled: {1}",newSite.name, enabled);
@@ -130,7 +179,8 @@ namespace KSPRemoteLaunch
                         catch(Exception e)
                         {
                             LogDebugOnly(e.Message);
-                            result = e.Message;
+                            //result = e.Message;
+                            raiseError(e.Message);
                             throw e;
                         }
                     });
@@ -141,7 +191,9 @@ namespace KSPRemoteLaunch
                 catch(Exception e)
                 {
                     LogDebugOnly(e.Message);
-                    result = e.Message;
+                    //result = e.Message;
+                    raiseError(e.Message);
+
                     
                 }
 
@@ -168,7 +220,8 @@ namespace KSPRemoteLaunch
                     launchText = currentLaunchSite.name;
 
                     LogDebugOnly(e.Message);
-                    result = e.Message;
+                    raiseError(e.Message);
+                    //result = e.Message;
 
                 }
             }
@@ -212,7 +265,8 @@ namespace KSPRemoteLaunch
             catch (Exception e)
             {
                 LogDebugOnly(e.Message);
-                result = "Can't find Launch Site";
+                raiseError(e.Message);
+                //result = "Can't find Launch Site";
             }
 
         }
@@ -257,7 +311,8 @@ namespace KSPRemoteLaunch
                         catch (Exception e)
                         {
                             LogDebugOnly(e.Message);
-                            result = e.Message;
+                            raiseError(e.Message);
+                            //result = e.Message;
                             throw e;
                         }
                     });
@@ -277,7 +332,8 @@ namespace KSPRemoteLaunch
                         catch (Exception e)
                         {
                             LogDebugOnly(e.Message);
-                            result = e.Message;
+                            raiseError(e.Message);
+                            //result = e.Message;
                             throw e;
                         }
                     });
@@ -305,15 +361,34 @@ namespace KSPRemoteLaunch
             if (Input.GetKeyDown("l"))
             {
                 LogDebugOnly("KeyDown event detected for 'l' ");
-                if (windowActive)
+                if (showGUI)
                 {
-                    RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
-                    windowActive = false;
+                    if (windowActive)
+                    {
+                        RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
+                        //windowActive = false;
+                        
+                    }
+                    if (errorWindowActive)
+                    {
+                        RenderingManager.RemoveFromPostDrawQueue(4, new Callback(drawErrorGUI)); //close the GUI
+
+                    }
+                    showGUI = false;
                 }
                 else
                 {
-                    RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open the GUI
-                    windowActive = true;
+                    if (windowActive)
+                    {
+                        RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open the GUI
+
+                    }
+                    if (errorWindowActive)
+                    {
+                        RenderingManager.AddToPostDrawQueue(4, new Callback(drawErrorGUI));//open the GUI
+                        
+                    }
+                    showGUI = true;
                 }
 
             }
@@ -325,7 +400,7 @@ namespace KSPRemoteLaunch
         void onDestroy()
         {
             RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
-
+            RenderingManager.RemoveFromPostDrawQueue(4, new Callback(drawErrorGUI)); //close the GUI
         }
     }
     

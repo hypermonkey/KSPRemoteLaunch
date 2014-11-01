@@ -418,7 +418,7 @@ namespace KSPRemoteLaunch
 
             if (altitude < 0)//then launchsite is underwater
             {
-                throw new Exception("Failed to create Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
+                throw new Exception("Failed to create/update Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
             }
 
             site.name = newName;
