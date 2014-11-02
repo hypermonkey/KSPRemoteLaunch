@@ -14,45 +14,69 @@ namespace KSPRemoteLaunch
         private static string SaveFile = "Persistant-LaunchSites.sfs";
         private static List<LaunchSiteExt> launchSites = new List<LaunchSiteExt>();
         private static bool firstTime = true;
-
+        //PSystemSetup.SpaceCenterFacility
+        //PSystemSetup.SpaceCenterFacility.SpawnPoint
         void Start()
         {
+            LogDebugOnly("Launch Driver Start");
             if (!firstTime)
                 return;
             //change default launch sites to extended version?
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
-                if (fi.FieldType.Name == "LaunchSite[]")
+                if (fi.FieldType.Name == "SpaceCenterFacility[]")
                 {
-                    PSystemSetup.LaunchSite[] sites = (PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance);
-                    
+                    PSystemSetup.SpaceCenterFacility[] sites = (PSystemSetup.SpaceCenterFacility[])fi.GetValue(PSystemSetup.Instance);
+                    LogDebugOnly("Begin LaunchPad setup");
                     LaunchSiteExt LaunchPad = new LaunchSiteExt();
                     LaunchPad.description = "The Launch Pad!";
-                    LaunchPad.launchPadName = sites[0].launchPadName;
-                    LaunchPad.launchPadPQS = sites[0].launchPadPQS;
-                    LaunchPad.launchPadTransform = sites[0].launchPadTransform;
+                    //LaunchPad.launchPadName = sites[0].launchPadName;
+                    LaunchPad.facilityTransformName = sites[0].facilityTransformName;
+
+                    //LaunchPad.launchPadPQS = sites[0].launchPadPQS;
+                    LaunchPad.facilityPQS = sites[0].facilityPQS;
+
+                    //LaunchPad.launchPadTransform = sites[0].launchPadTransform;
+                    LaunchPad.facilityTransform = sites[0].facilityTransform;
+                    LaunchPad.facilityName = sites[0].facilityName;
+                    LaunchPad.spawnPoints = sites[0].spawnPoints;
+
                     LaunchPad.name = sites[0].name;
                     LaunchPad.pqsName = sites[0].pqsName;
+                    
 
                     //PQSCity cty = LaunchPad.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
                     //cty = LaunchPad.launchPadTransform.localPosition
                     //LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
-                    LaunchPad.launchPadPQS.SetTarget(LaunchPad.launchPadTransform);
-                    PSystemSetup.Instance.SetPQSActive(LaunchPad.launchPadPQS);
-                    LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
+                    //LaunchPad.launchPadPQS.SetTarget(LaunchPad.launchPadTransform);
+                    LaunchPad.facilityPQS.SetTarget(LaunchPad.spawnPoints[0].spawnPointTransform);
+
+                    //PSystemSetup.Instance.SetPQSActive(LaunchPad.launchPadPQS);
+                    PSystemSetup.Instance.SetPQSActive(LaunchPad.facilityPQS);
+
+                    //LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
                     //cty.Orientate();
 
-                    LaunchPad.lon = FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position);
-                    LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(LaunchPad.launchPadTransform.position);
+                    LaunchPad.lon = FlightGlobals.Bodies[1].GetLongitude(LaunchPad.GetSpawnPoint(LaunchPad.name).spawnPointTransform.position);
+                    LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(LaunchPad.GetSpawnPoint(LaunchPad.name).spawnPointTransform.position);
                     
                     //LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(cty.transform.position);
+                    //this is redundant - pqsName == body
                     LaunchPad.body = "Kerbin";
-
+                    LogDebugOnly("End LaunchPad setup");
                     LaunchSiteExt Runway = new LaunchSiteExt();
                     Runway.description = "The Runway!";
-                    Runway.launchPadName = sites[1].launchPadName;
-                    Runway.launchPadPQS = sites[1].launchPadPQS;
-                    Runway.launchPadTransform = sites[1].launchPadTransform;
+                    //Runway.launchPadName = sites[1].launchPadName;
+                    Runway.facilityTransformName = sites[1].facilityTransformName;
+
+                    //Runway.launchPadPQS = sites[1].launchPadPQS;
+                    Runway.facilityPQS = sites[1].facilityPQS;
+
+                    //Runway.launchPadTransform = sites[1].launchPadTransform;
+                    Runway.facilityTransform = sites[1].facilityTransform;
+                    Runway.facilityName = sites[1].facilityName;
+                    Runway.spawnPoints = sites[1].spawnPoints;
+
                     Runway.name = sites[1].name;
                     Runway.pqsName = sites[1].pqsName;
 
@@ -61,10 +85,11 @@ namespace KSPRemoteLaunch
                     //Runway.lon = FlightGlobals.Bodies[1].GetLongitude(cty.transform.position);
                     //Runway.lat = FlightGlobals.Bodies[1].GetLatitude(cty.transform.position);
 
-                    Runway.launchPadPQS.SetTarget(LaunchPad.launchPadTransform);
-                    PSystemSetup.Instance.SetPQSActive(Runway.launchPadPQS);
-                    Runway.lon = FlightGlobals.Bodies[1].GetLongitude(Runway.launchPadTransform.position);
-                    Runway.lat = FlightGlobals.Bodies[1].GetLatitude(Runway.launchPadTransform.position);
+                    //Runway.facilityPQS.SetTarget(Runway.spawnPoints[0].spawnPointTransform);
+                    Runway.facilityPQS.SetTarget(Runway.GetSpawnPoint(Runway.name).spawnPointTransform);
+                    PSystemSetup.Instance.SetPQSActive(Runway.facilityPQS);
+                    Runway.lon = FlightGlobals.Bodies[1].GetLongitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
+                    Runway.lat = FlightGlobals.Bodies[1].GetLatitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
                     PSystemSetup.Instance.SetPQSInactive();
                     Runway.body = "Kerbin";
 
@@ -158,8 +183,10 @@ namespace KSPRemoteLaunch
 
         public static void setLaunchSite(String siteName) 
         {
-            if (PSystemSetup.Instance.GetLaunchSite(siteName) != null)
+            if (PSystemSetup.Instance.GetSpaceCenterFacility(siteName) != null)
+            {
                 EditorLogic.fetch.launchSiteName = siteName;
+            }
             else
                 throw new Exception("Can't find Launch Site: '" + siteName + "'");
 
@@ -173,12 +200,12 @@ namespace KSPRemoteLaunch
 
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
-                if (fi.FieldType.Name == "LaunchSite[]")
+                if (fi.FieldType.Name == "SpaceCenterFacility[]")
                 {
-                    PSystemSetup.LaunchSite[] sites = (PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance);
-                    if (PSystemSetup.Instance.GetLaunchSite(siteToDelete.name) != null) //logs 'Can not find launch site' to console 
+                    PSystemSetup.SpaceCenterFacility[] sites = (PSystemSetup.SpaceCenterFacility[])fi.GetValue(PSystemSetup.Instance);
+                    if (PSystemSetup.Instance.GetSpaceCenterFacility(siteToDelete.name) != null) //logs 'Can not find launch site' to console 
                     {
-                        PSystemSetup.LaunchSite[] newSites = new PSystemSetup.LaunchSite[sites.Length - 1];
+                        PSystemSetup.SpaceCenterFacility[] newSites = new PSystemSetup.SpaceCenterFacility[sites.Length - 1];
                         for(int i = 0; i < sites.Length; i++)
                         {
                             if(sites[i].name != siteToDelete.name)
@@ -193,7 +220,7 @@ namespace KSPRemoteLaunch
             }
 
             //object that defines launch site - created during creation logic
-            GameObject.Destroy(siteToDelete.launchPadTransform.parent.gameObject);
+            GameObject.Destroy(siteToDelete.facilityTransform.gameObject);
             
             launchSites.Remove(siteToDelete);
             saveLaunchSites();
@@ -228,7 +255,8 @@ namespace KSPRemoteLaunch
 
             
             PQSCity launchPQS;
-            launchPQS = site.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
+            launchPQS = site.facilityTransform.GetComponent<PQSCity>();
+            //launchPQS = site.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
             //UnityEngine.Object.Destroy(launchPQS);
             //launchPQS = site.launchPadTransform.parent.gameObject.AddComponent<PQSCity>();
 
@@ -247,7 +275,8 @@ namespace KSPRemoteLaunch
             
             LogDebugOnly("Set PQSCity variables");
 
-            GameObject obj = site.launchPadTransform.parent.gameObject;
+            //GameObject obj = site.launchPadTransform.parent.gameObject;
+            GameObject obj = site.facilityTransform.gameObject;
             obj.name = site.name;
             obj.transform.parent = body.pqsController.transform;
 
@@ -260,7 +289,7 @@ namespace KSPRemoteLaunch
             LogDebugOnly("Setup PQSCity");
 
 
-            MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupLaunchSites", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupFacilities", BindingFlags.NonPublic | BindingFlags.Instance);
             if (updateSitesMI == null)
             {
                 LogDebugOnly("Fail to find SetupLaunchSites().");
@@ -333,9 +362,9 @@ namespace KSPRemoteLaunch
             //this code is copied from kerbtown
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
-                if (fi.FieldType.Name == "LaunchSite[]")
+                if (fi.FieldType.Name == "SpaceCenterFacility[]")
                 {
-                    PSystemSetup.LaunchSite[] sites = (PSystemSetup.LaunchSite[])fi.GetValue(PSystemSetup.Instance);
+                    PSystemSetup.SpaceCenterFacility[] sites = (PSystemSetup.SpaceCenterFacility[])fi.GetValue(PSystemSetup.Instance);
                     
                     //PSystemSetup.LaunchSite newSite = new PSystemSetup.LaunchSite();
                     //newSite = new LaunchSiteExt();
@@ -348,8 +377,8 @@ namespace KSPRemoteLaunch
                     //newSite.lon = lon;
                     //newSite.body = body.name;
                     Debug.Log("PQS Name: " + newSite.pqsName);
-                    
-                    PSystemSetup.LaunchSite[] newSites = new PSystemSetup.LaunchSite[sites.Length + 1];
+
+                    PSystemSetup.SpaceCenterFacility[] newSites = new PSystemSetup.SpaceCenterFacility[sites.Length + 1];
                     for (int i = 0; i < sites.Length; ++i)
                     {
                         //Debug.Log("Org Name: " + sites[i].name);
@@ -357,15 +386,15 @@ namespace KSPRemoteLaunch
                         //Debug.Log("Org PQS Name: " + sites[i].pqsName);
                         newSites[i] = sites[i];
                     }
-                    newSites[newSites.Length - 1] = (PSystemSetup.LaunchSite)newSite;
+                    newSites[newSites.Length - 1] = (PSystemSetup.SpaceCenterFacility)newSite;
                     fi.SetValue(PSystemSetup.Instance, newSites);
                     //sites = newSites;
-                    Debug.Log("Created launch site \"" + newSite.name + "\" with transform " + newSite.launchPadName);
+                    Debug.Log("Created launch site \"" + newSite.name + "\" with transform " + newSite.spawnPoints[0].spawnTransformURL);
                     
                 }
             }
 
-            MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupLaunchSites", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupFacilities", BindingFlags.NonPublic | BindingFlags.Instance);
             if (updateSitesMI == null)
             {
                 LogDebugOnly("Fail to find SetupLaunchSites().");
@@ -390,7 +419,7 @@ namespace KSPRemoteLaunch
         private static void setValues(string newName, string newDesc, string newBody, double newLat, double newLon, LaunchSiteExt site)
         {
 
-            if (PSystemSetup.Instance.GetLaunchSite(newName) != null && site.name != newName)//logs 'Can not find launch site' to console when null
+            if (PSystemSetup.Instance.GetSpaceCenterFacility(newName) != null && site.name != newName)//logs 'Can not find launch site' to console when null
                 throw new Exception("Launch Site '" + newName + "' already exists");
 
             //Can't use this on defualt launch sites
@@ -427,13 +456,19 @@ namespace KSPRemoteLaunch
             site.body = newBody;
             site.pqsName = newBody;
             site.description = newDesc;
-            site.launchPadName = newName + "/" + "VoidModel_spawn";
+            site.facilityTransformName = newName;
+            PSystemSetup.SpaceCenterFacility.SpawnPoint point = new PSystemSetup.SpaceCenterFacility.SpawnPoint();
+            point.name = newName;
+            point.spawnTransformURL = "VoidModel_spawn";
+            site.spawnPoints = new PSystemSetup.SpaceCenterFacility.SpawnPoint[] { point };
+
+            //site.launchPadName = newName + "/" + "VoidModel_spawn";
 
         }
 
     }
 
-    public class LaunchSiteExt: PSystemSetup.LaunchSite
+    public class LaunchSiteExt : PSystemSetup.SpaceCenterFacility
     {
         public string description;
         public double lat;
