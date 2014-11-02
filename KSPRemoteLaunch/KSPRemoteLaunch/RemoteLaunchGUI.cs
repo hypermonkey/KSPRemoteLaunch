@@ -281,7 +281,7 @@ namespace KSPRemoteLaunch
 
         void Start()
         {
-            LaunchDriver.init();
+            //LaunchDriver.init();
             if (hasRunOnce)
             {
 

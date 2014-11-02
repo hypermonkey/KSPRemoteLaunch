@@ -7,20 +7,38 @@ using System.Reflection;
 
 namespace KSPRemoteLaunch
 {
-    //[KSPAddon(KSPAddon.Startup.EditorAny, false)]
+    [KSPAddon(KSPAddon.Startup.MainMenu, false)]
     public class LaunchDriver:MonoBehaviourExtended
     {
-        private static string SavePath = KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
+        private static string SavePath = "";//KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
         private static string SaveFile = "Persistant-LaunchSites.sfs";
         private static List<LaunchSiteExt> launchSites = new List<LaunchSiteExt>();
-        private static bool firstTime = true;
+        //private static bool firstTime = true;
         //PSystemSetup.SpaceCenterFacility
         //PSystemSetup.SpaceCenterFacility.SpawnPoint
-        public static void init()
+
+        void Start()
         {
+            GameEvents.onGameStateLoad.Add(new EventData<ConfigNode>.OnEvent(this.onGameStateLoad));
+        }
+        private void onGameStateLoad(ConfigNode cnf)
+        {
+            Debug.Log("----Game Laoded!!!----");
+            if (SavePath != KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/")
+            {
+                SavePath = KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
+                LogDebugOnly(SavePath);
+                init();
+            }
+        }
+
+        private static void init()
+        {
+            
             LogDebugOnly("---Launch Driver Start---");
-            if (!firstTime)
-                return;
+            launchSites = new List<LaunchSiteExt>();
+            //if (!firstTime)
+            //    return;
             //change default launch sites to extended version?
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
@@ -52,7 +70,7 @@ namespace KSPRemoteLaunch
                     LaunchPad.facilityPQS.SetTarget(LaunchPad.spawnPoints[0].spawnPointTransform);
 
                     //PSystemSetup.Instance.SetPQSActive(LaunchPad.launchPadPQS);
-                    PSystemSetup.Instance.SetPQSActive(LaunchPad.facilityPQS);
+                    //PSystemSetup.Instance.SetPQSActive(LaunchPad.facilityPQS);
 
                     //LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
                     //cty.Orientate();
@@ -87,52 +105,56 @@ namespace KSPRemoteLaunch
 
                     //Runway.facilityPQS.SetTarget(Runway.spawnPoints[0].spawnPointTransform);
                     Runway.facilityPQS.SetTarget(Runway.GetSpawnPoint(Runway.name).spawnPointTransform);
-                    PSystemSetup.Instance.SetPQSActive(Runway.facilityPQS);
+                    //PSystemSetup.Instance.SetPQSActive(Runway.facilityPQS);
                     Runway.lon = FlightGlobals.Bodies[1].GetLongitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
                     Runway.lat = FlightGlobals.Bodies[1].GetLatitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
-                    PSystemSetup.Instance.SetPQSInactive();
+                    //PSystemSetup.Instance.SetPQSInactive();
                     Runway.body = "Kerbin";
 
                     LogDebugOnly("Sites Created");
-                    sites[0] = LaunchPad;
-                    sites[1] = Runway;
+                    //sites[0] = LaunchPad;
+                    //sites[1] = Runway;
                     launchSites.Add(LaunchPad);
                     launchSites.Add(Runway);
 
+                    PSystemSetup.SpaceCenterFacility[] defaultSites = new PSystemSetup.SpaceCenterFacility[] { sites[0], sites[1],sites[2],sites[3],sites[4],sites[5],sites[6],sites[7],sites[8],sites[9] };
+                    fi.SetValue(PSystemSetup.Instance, defaultSites);
                     
 
-                    firstTime = false;
+                    //firstTime = false;
 
                     loadLaunchSites();
-                    LogDebugOnly("Sites Added");
+                    LogDebugOnly("Sites Loaded");
                 }
             }
         }
 
         private static void loadLaunchSites()
         {
-            LogDebugOnly("Loading Launch Sites");
-            ConfigNode launchSiteLoad = null;
+            LogDebugOnly("Loading Launch Sites...");
+            
             try
             {
-                launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
+                
+                ConfigNode launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
+                if (launchSiteLoad == null)
+                    return;//Nothing to load
+                LogDebugOnly("Launch Sites File Found");
+                foreach (ConfigNode c in launchSiteLoad.GetNodes("LaunchSite"))
+                {
+                    double lat = double.Parse(c.GetValue("Lat"));
+                    double lon = double.Parse(c.GetValue("Lon"));
+                    CelestialBody theBody = FlightGlobals.Bodies.Find(body => body.name == c.GetValue("Body"));
+                    string siteName = c.GetValue("Name");
+                    string desc = c.GetValue("Description");
+                    CreateCustomLaunchSite(lat, lon, theBody, siteName, desc);
+                }
             }
-            catch(Exception e)
+            catch//(Exception e)
             {
-                Log(e.Message);
+                //Log(e.Message);
             }
-            if (launchSiteLoad == null)
-                return;//Nothing to load
-            LogDebugOnly("Launch Sites File Found");
-            foreach (ConfigNode c in launchSiteLoad.GetNodes("LaunchSite"))
-            {
-                double lat = double.Parse(c.GetValue("Lat"));
-                double lon = double.Parse(c.GetValue("Lon"));
-                CelestialBody theBody = FlightGlobals.Bodies.Find(body => body.name == c.GetValue("Body"));
-                string siteName = c.GetValue("Name");
-                string desc =  c.GetValue("Description");
-                CreateCustomLaunchSite(lat,lon,theBody,siteName,desc);
-            }
+            
 
 
         }
