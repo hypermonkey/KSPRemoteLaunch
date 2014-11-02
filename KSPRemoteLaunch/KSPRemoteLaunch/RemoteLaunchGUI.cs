@@ -282,12 +282,14 @@ namespace KSPRemoteLaunch
         void Start()
         {
             //LaunchDriver.init();
-            if (hasRunOnce)
+            
+            if (hasRunOnce && !LaunchDriver.hasLoadedGameChanged())
             {
-
-                RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open GUI
-
+                addWindows();
+                //RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open GUI
+                
                 //KSP will always revert to the default site for the selected editor
+                //if (!(currentLaunchSite.name == "LaunchPad" || currentLaunchSite.name == "Runway"))
                 setLaunchSite(currentLaunchSite);
                 return;
             }
@@ -347,14 +349,39 @@ namespace KSPRemoteLaunch
             windowPos.x = Screen.width / 2;
             windowPos.y = Screen.height / 2;
 
-            RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//start the GUI
-
+            //RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//start the GUI
             windowActive = true;
-           
-
+            showGUI = true;
+            addWindows();
+            
+            LogDebugOnly("GUI Open: " + showGUI);
             LogDebugOnly("GUI Added");
             
 
+        }
+
+        private void removeWindows()
+        {
+            if (windowActive)
+            {
+                RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
+            }
+            if (errorWindowActive)
+            {
+                RenderingManager.RemoveFromPostDrawQueue(4, new Callback(drawErrorGUI)); //close the GUI
+            }
+        }
+
+        private void addWindows()
+        {
+            if (windowActive)
+            {
+                RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open the GUI
+            }
+            if (errorWindowActive)
+            {
+                RenderingManager.AddToPostDrawQueue(4, new Callback(drawErrorGUI));//open the GUI
+            }
         }
 
         void Update()
@@ -362,33 +389,17 @@ namespace KSPRemoteLaunch
             if (Input.GetKeyDown("l"))
             {
                 LogDebugOnly("KeyDown event detected for 'l' ");
+                LogDebugOnly("GUI Open: " + showGUI);
+                LogDebugOnly("Main Window Open: " + windowActive);
+                LogDebugOnly("Error Window Open: " + errorWindowActive);
                 if (showGUI)
                 {
-                    if (windowActive)
-                    {
-                        RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
-                        //windowActive = false;
-                        
-                    }
-                    if (errorWindowActive)
-                    {
-                        RenderingManager.RemoveFromPostDrawQueue(4, new Callback(drawErrorGUI)); //close the GUI
-
-                    }
+                    removeWindows();
                     showGUI = false;
                 }
                 else
                 {
-                    if (windowActive)
-                    {
-                        RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open the GUI
-
-                    }
-                    if (errorWindowActive)
-                    {
-                        RenderingManager.AddToPostDrawQueue(4, new Callback(drawErrorGUI));//open the GUI
-                        
-                    }
+                    addWindows();
                     showGUI = true;
                 }
 
@@ -400,6 +411,9 @@ namespace KSPRemoteLaunch
 
         void onDestroy()
         {
+            if(!showGUI)
+                RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open the GUI
+            showGUI = true;
             RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
             RenderingManager.RemoveFromPostDrawQueue(4, new Callback(drawErrorGUI)); //close the GUI
         }

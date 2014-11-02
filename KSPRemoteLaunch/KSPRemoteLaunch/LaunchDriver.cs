@@ -24,12 +24,20 @@ namespace KSPRemoteLaunch
         private void onGameStateLoad(ConfigNode cnf)
         {
             Debug.Log("----Game Laoded!!!----");
-            if (SavePath != KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/")
+            if (hasLoadedGameChanged())
             {
                 SavePath = KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
                 LogDebugOnly(SavePath);
                 init();
             }
+        }
+
+        public static bool hasLoadedGameChanged()
+        {
+            if (SavePath != KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/")
+                return true;
+            else
+                return false;
         }
 
         private static void init()
