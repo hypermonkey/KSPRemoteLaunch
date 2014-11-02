@@ -7,30 +7,13 @@ using System.Reflection;
 
 namespace KSPRemoteLaunch
 {
-    [KSPAddon(KSPAddon.Startup.MainMenu, false)]
+    [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     public class LaunchDriver:MonoBehaviourExtended
     {
         private static string SavePath = "";//KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
         private static string SaveFile = "Persistant-LaunchSites.sfs";
         private static List<LaunchSiteExt> launchSites = new List<LaunchSiteExt>();
-        //private static bool firstTime = true;
-        //PSystemSetup.SpaceCenterFacility
-        //PSystemSetup.SpaceCenterFacility.SpawnPoint
 
-        void Start()
-        {
-            GameEvents.onGameStateLoad.Add(new EventData<ConfigNode>.OnEvent(this.onGameStateLoad));
-        }
-        private void onGameStateLoad(ConfigNode cnf)
-        {
-            Debug.Log("----Game Laoded!!!----");
-            if (hasLoadedGameChanged())
-            {
-                SavePath = KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
-                LogDebugOnly(SavePath);
-                init();
-            }
-        }
 
         public static bool hasLoadedGameChanged()
         {
@@ -40,10 +23,18 @@ namespace KSPRemoteLaunch
                 return false;
         }
 
-        private static void init()
+        void Start()
         {
             
             LogDebugOnly("---Launch Driver Start---");
+            if (!hasLoadedGameChanged())
+            {
+                
+                LogDebugOnly(SavePath);
+                return;
+            }
+            SavePath = KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
+
             launchSites = new List<LaunchSiteExt>();
             //if (!firstTime)
             //    return;

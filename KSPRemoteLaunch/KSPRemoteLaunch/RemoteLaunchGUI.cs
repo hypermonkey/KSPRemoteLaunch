@@ -21,8 +21,9 @@ namespace KSPRemoteLaunch
         private static string descText = "";
         private static string planetText = "";
         private static bool showGUI = true;
+        private static string loadedGame = HighLogic.SaveFolder;
         //private Vector2 scrollPos = new Vector2(0, 0);
-
+        
         private static double lat = 0;
         private static double lon = 0;
         //private static double height = 0.5;
@@ -283,8 +284,9 @@ namespace KSPRemoteLaunch
         {
             //LaunchDriver.init();
             
-            if (hasRunOnce && !LaunchDriver.hasLoadedGameChanged())
+            if (hasRunOnce && loadedGame == HighLogic.SaveFolder)
             {
+                
                 if(showGUI)
                     addWindows();
                 //RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open GUI
@@ -294,7 +296,7 @@ namespace KSPRemoteLaunch
                 setLaunchSite(currentLaunchSite);
                 return;
             }
-
+            loadedGame = HighLogic.SaveFolder;
             hasRunOnce = true;
 
             SiteToggleList = new GUIOptionGroup();
@@ -351,6 +353,7 @@ namespace KSPRemoteLaunch
             windowPos.y = Screen.height / 2;
 
             //RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//start the GUI
+            errorWindowActive = false;
             windowActive = true;
             showGUI = true;
             addWindows();
