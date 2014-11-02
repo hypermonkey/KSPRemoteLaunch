@@ -285,7 +285,8 @@ namespace KSPRemoteLaunch
             
             if (hasRunOnce && !LaunchDriver.hasLoadedGameChanged())
             {
-                addWindows();
+                if(showGUI)
+                    addWindows();
                 //RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open GUI
                 
                 //KSP will always revert to the default site for the selected editor
@@ -411,11 +412,11 @@ namespace KSPRemoteLaunch
 
         void onDestroy()
         {
-            if(!showGUI)
-                RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open the GUI
-            showGUI = true;
+            removeWindows();
+            /*
             RenderingManager.RemoveFromPostDrawQueue(3, new Callback(drawGUI)); //close the GUI
             RenderingManager.RemoveFromPostDrawQueue(4, new Callback(drawErrorGUI)); //close the GUI
+             * */
         }
     }
     
