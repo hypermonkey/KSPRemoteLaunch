@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace KSPRemoteLaunch
 {
-    [KSPAddon(KSPAddon.Startup.EditorAny, false)]
+    //[KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class LaunchDriver:MonoBehaviourExtended
     {
         private static string SavePath = KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
@@ -16,9 +16,9 @@ namespace KSPRemoteLaunch
         private static bool firstTime = true;
         //PSystemSetup.SpaceCenterFacility
         //PSystemSetup.SpaceCenterFacility.SpawnPoint
-        void Start()
+        public static void init()
         {
-            LogDebugOnly("Launch Driver Start");
+            LogDebugOnly("---Launch Driver Start---");
             if (!firstTime)
                 return;
             //change default launch sites to extended version?
@@ -99,10 +99,12 @@ namespace KSPRemoteLaunch
                     launchSites.Add(LaunchPad);
                     launchSites.Add(Runway);
 
-                    loadLaunchSites();
-                    LogDebugOnly("Sites Added");
+                    
 
                     firstTime = false;
+
+                    loadLaunchSites();
+                    LogDebugOnly("Sites Added");
                 }
             }
         }
@@ -110,7 +112,15 @@ namespace KSPRemoteLaunch
         private static void loadLaunchSites()
         {
             LogDebugOnly("Loading Launch Sites");
-            ConfigNode launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
+            ConfigNode launchSiteLoad = null;
+            try
+            {
+                launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
+            }
+            catch(Exception e)
+            {
+                Log(e.Message);
+            }
             if (launchSiteLoad == null)
                 return;//Nothing to load
             LogDebugOnly("Launch Sites File Found");
@@ -150,13 +160,25 @@ namespace KSPRemoteLaunch
 
         public static void saveLaunchSite(LaunchSiteExt site)
         {
-            ConfigNode launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
+            LogDebugOnly("Start Save");
+            ConfigNode launchSiteLoad = null;
+            try
+            {
+                launchSiteLoad = ConfigNode.Load(SavePath + SaveFile);
+            }
+            catch
+            {
+                Log("Persistant-LaunchSites empty. Creating new file.");
+            }
+
             if (launchSiteLoad == null)
             {
                 //we need to create the file
+                LogDebugOnly("Create New File");
                 launchSiteLoad = new ConfigNode("LaunchSites");
             }
             //although there should be only one node with the specified name - we can't guarentee this (user may edit file)
+            LogDebugOnly("Find saved Launch site");
             ConfigNode confSite = launchSiteLoad.GetNodes("LaunchSite").ToList<ConfigNode>().FirstOrDefault(conf => conf.GetValue("Name") == site.name);
             if (confSite != null)
             {
@@ -184,9 +206,7 @@ namespace KSPRemoteLaunch
         public static void setLaunchSite(String siteName) 
         {
             if (PSystemSetup.Instance.GetSpaceCenterFacility(siteName) != null)
-            {
                 EditorLogic.fetch.launchSiteName = siteName;
-            }
             else
                 throw new Exception("Can't find Launch Site: '" + siteName + "'");
 
