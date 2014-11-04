@@ -11,7 +11,7 @@ namespace KSPRemoteLaunch
     public class LaunchDriver:MonoBehaviourExtended
     {
         private static string SavePath = "";//KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
-        private static string SaveFile = "Persistant-LaunchSites.sfs";
+        private static string SaveFile = "Persistent-LaunchSites.sfs";
         private static List<LaunchSiteExt> launchSites = new List<LaunchSiteExt>();
 
 
