@@ -184,6 +184,13 @@ namespace KSPRemoteLaunch
                             raiseError(e.Message);
                             throw e;
                         }
+                    },
+                    delegate()
+                    {
+
+                        update(newSite);
+
+
                     });
                     //move this to LaunchDriver.CreateCustomLaunchSite
                     LaunchDriver.saveLaunchSite(newSite);
@@ -202,29 +209,8 @@ namespace KSPRemoteLaunch
 
             if (GUILayout.Button("Update", buttonSty, GUILayout.ExpandWidth(true)))
             {
-                LogDebugOnly("-------Begin Update----------");
-                LogDebugOnly(currentLaunchSite.name);
+                SiteToggleList.updateActiveButton();
 
-                try
-                {
-
-                    LaunchDriver.updateLaunchSite(currentLaunchSite, launchText, descText, planetText, double.Parse(latText), double.Parse(lonText));
-                    //move this into update?
-                    LaunchDriver.saveLaunchSite(currentLaunchSite);
-                }
-                catch(Exception e)
-                {
-                    planetText = currentLaunchSite.body;
-                    descText = currentLaunchSite.description;
-                    latText = currentLaunchSite.lat.ToString();
-                    lonText = currentLaunchSite.lon.ToString();
-                    launchText = currentLaunchSite.name;
-
-                    LogDebugOnly(e.Message);
-                    raiseError(e.Message);
-                    //result = e.Message;
-
-                }
             }
 
             if (GUILayout.Button("Delete", buttonSty, GUILayout.ExpandWidth(true)))
@@ -248,6 +234,36 @@ namespace KSPRemoteLaunch
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
             
+        }
+
+        private void update(LaunchSiteExt site)
+        {
+            LogDebugOnly("-------Begin Update----------");
+
+            LogDebugOnly(currentLaunchSite.name);
+
+            try
+            {
+                //will throw an exception if the new site is invalid
+                LaunchDriver.updateLaunchSite(site, launchText, descText, planetText, double.Parse(latText), double.Parse(lonText));
+                SiteToggleList.setActiveButtonText(site.name);
+                //move this into update?
+                LaunchDriver.saveLaunchSite(site);
+            }
+            catch (Exception e)
+            {
+                //undo changes to GUI site details
+                planetText = site.body;
+                descText = site.description;
+                latText = site.lat.ToString();
+                lonText = site.lon.ToString();
+                launchText = site.name;
+
+                LogDebugOnly(e.Message);
+                raiseError(e.Message);
+                //result = e.Message;
+
+            }
         }
 
         private void setLaunchSite(LaunchSiteExt site)
@@ -286,7 +302,7 @@ namespace KSPRemoteLaunch
             
             if (hasRunOnce && loadedGame == HighLogic.SaveFolder)
             {
-                
+                LogDebugOnly("Reloading GUI");
                 if(showGUI)
                     addWindows();
                 //RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));//open GUI
@@ -296,20 +312,24 @@ namespace KSPRemoteLaunch
                 setLaunchSite(currentLaunchSite);
                 return;
             }
+            LogDebugOnly("Starting GUI");
             loadedGame = HighLogic.SaveFolder;
             hasRunOnce = true;
 
+            LogDebugOnly("Adding Toggle Button Group");
             SiteToggleList = new GUIOptionGroup();
             
             LaunchDriver.getLaunchSites().ForEach(delegate(LaunchSiteExt site)
             {
+                LogDebugOnly("Adding Toggle Button: " + site.name);
                 if (HighLogic.LoadedScene == GameScenes.EDITOR && site.name == "LaunchPad" || HighLogic.LoadedScene == GameScenes.SPH && site.name == "Runway")
                     SiteToggleList.addActiveToggleButton(site.name, delegate(bool enabled)
                     {
                         LogDebugOnly("Site: {0} | Enabled: {1}", site.name, enabled);
                         setLaunchSite(site);
                         currentLaunchSite = site;
-                    }, delegate() {
+                    }, delegate()
+                    {
                         try
                         {
                             LaunchDriver.deleteLaunchSite(site);
@@ -321,6 +341,10 @@ namespace KSPRemoteLaunch
                             //result = e.Message;
                             throw e;
                         }
+                    },
+                    delegate() {
+
+                        update(site);
                     });
                 else
                 {
@@ -342,6 +366,11 @@ namespace KSPRemoteLaunch
                             //result = e.Message;
                             throw e;
                         }
+                    },
+                    delegate()
+                    {
+
+                        update(site);
                     });
                 }
                 
@@ -422,134 +451,7 @@ namespace KSPRemoteLaunch
              * */
         }
     }
-    
-    internal class GUIOptionGroup
-    {
-        private List<GUIOptionButton> buttons;
-        private GUIOptionButton activeButton;
-        private Vector2 scrollPos = new Vector2(0, 0);
-        public delegate void onSelected(bool enabled);
-        public delegate void onDelete();
 
-        public GUIOptionGroup()
-        {
-            buttons = new List<GUIOptionButton>();
-        }
-
-        public void setStyle(GUIStyle style)
-        {
-            foreach (GUIOptionButton btn in buttons)
-            {
-                btn.setStyle(style);
-            }
-        }
-        public void deleteActiveButton()
-        {
-            activeButton.delete();
-            buttons.Remove(activeButton);
-        }
-
-        public void addToggleButton(string text, onSelected action, onDelete delAction)
-        {
-            buttons.Add(new GUIOptionButton(text, action, delAction));
-
-        }
-
-        public void setActiveToggleButton(GUIOptionButton toggleButton)
-        {
-            changeActiveToggleButton(toggleButton);
-        }
-
-        public void addActiveToggleButton(string text, onSelected action, onDelete delAction)
-        {
-            GUIOptionButton toggleButton = new GUIOptionButton(text, action, delAction);
-            buttons.Add(toggleButton);
-            changeActiveToggleButton(toggleButton);
-        }
-
-        //add GUI params?
-        public void checkSelected()
-        {
-            scrollPos = GUILayout.BeginScrollView(scrollPos, GUI.skin.scrollView, GUILayout.Width(210.0f));
-            foreach (GUIOptionButton btn in buttons)
-            {
-                if (btn.CheckPressed() && btn != activeButton)
-                {
-                    Debug.Log("Previous Active Button: " + activeButton);
-                    activeButton.dissable();
-                    btn.enable();
-                    activeButton = btn;
-                    Debug.Log("Current Active Button: " + activeButton);
-                }
-            }
-            GUILayout.EndScrollView();
-        }
-
-        private void changeActiveToggleButton(GUIOptionButton toggleButton)
-        {
-            if (activeButton != null)
-            {
-                activeButton.dissable();
-            }
-            toggleButton.enable();
-            activeButton = toggleButton;
-        }
-
-
-        internal class GUIOptionButton
-        {
-            private GUIStyle buttonStyle;
-            private string GUIText;
-            private bool enabled = false;
-            private onSelected selectedAction;
-            private onDelete deleteAction;
-
-            public GUIOptionButton(string text, onSelected action, onDelete delAction)
-            {
-                selectedAction = action;
-                deleteAction = delAction;
-                GUIText = text;
-
-            }
-
-            public void setStyle(GUIStyle style)
-            {
-                buttonStyle = style;
-            }
-
-            
-            //Button must be enabled to be pressed
-            public bool CheckPressed()
-            {
-                if (GUILayout.Toggle(enabled, GUIText, buttonStyle, GUILayout.Width(174.0f)))
-                {
-                    return true;
-                }
-                return false;
-            }
-
-            public void dissable()
-            {
-                enabled = false;
-            }
-            public void enable()
-            {
-                enabled = true;
-                selectedAction(enabled);
-            }
-
-            public void delete()
-            {
-                deleteAction();
-            }
-
-            public override string ToString()
-            {
-                return GUIText;
-            }
-        }
-    }
-    
     
         
         
