@@ -188,7 +188,7 @@ namespace KSPRemoteLaunch
                     delegate()
                     {
 
-                        update(newSite);
+                        updateLaunchSite(newSite);
 
 
                     });
@@ -236,7 +236,7 @@ namespace KSPRemoteLaunch
             
         }
 
-        private void update(LaunchSiteExt site)
+        private void updateLaunchSite(LaunchSiteExt site)
         {
             LogDebugOnly("-------Begin Update----------");
 
@@ -344,7 +344,7 @@ namespace KSPRemoteLaunch
                     },
                     delegate() {
 
-                        update(site);
+                        updateLaunchSite(site);
                     });
                 else
                 {
@@ -370,7 +370,7 @@ namespace KSPRemoteLaunch
                     delegate()
                     {
 
-                        update(site);
+                        updateLaunchSite(site);
                     });
                 }
                 
@@ -419,7 +419,8 @@ namespace KSPRemoteLaunch
 
         void Update()
         {
-            if (Input.GetKeyDown("l"))
+            //LogDebugOnly("-----Begin Update-------");
+            if (Input.GetKeyDown(KeyCode.L))
             {
                 LogDebugOnly("KeyDown event detected for 'l' ");
                 LogDebugOnly("GUI Open: " + showGUI);
@@ -437,7 +438,7 @@ namespace KSPRemoteLaunch
                 }
 
             }
-
+            //LogDebugOnly("-----End Update-------");
 
         }
 
