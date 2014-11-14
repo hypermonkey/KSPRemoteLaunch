@@ -10,14 +10,14 @@ namespace KSPRemoteLaunch
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     public class LaunchDriver:MonoBehaviourExtended
     {
-        private static string SavePath = "";//KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
+        private static string SavePath = "";//KSPUtil.ApplicationRootPath + "/saves/" + HighLogic.SaveFolder + "/";
         private static string SaveFile = "Persistent-LaunchSites.sfs";
         private static List<LaunchSiteExt> launchSites = new List<LaunchSiteExt>();
 
 
         public static bool hasLoadedGameChanged()
         {
-            if (SavePath != KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/")
+            if (SavePath != KSPUtil.ApplicationRootPath + "/saves/" + HighLogic.SaveFolder + "/")
                 return true;
             else
                 return false;
@@ -33,7 +33,7 @@ namespace KSPRemoteLaunch
                 LogDebugOnly(SavePath);
                 return;
             }
-            SavePath = KSPUtil.ApplicationRootPath + "/Saves/" + HighLogic.SaveFolder + "/";
+            SavePath = KSPUtil.ApplicationRootPath + "/saves/" + HighLogic.SaveFolder + "/";
 
             launchSites = new List<LaunchSiteExt>();
             //if (!firstTime)
