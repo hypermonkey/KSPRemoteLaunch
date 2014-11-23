@@ -74,12 +74,12 @@ namespace KSPRemoteLaunch
                     //LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
                     //cty.Orientate();
 
-                    LaunchPad.lon = FlightGlobals.Bodies[1].GetLongitude(LaunchPad.GetSpawnPoint(LaunchPad.name).spawnPointTransform.position);
-                    LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(LaunchPad.GetSpawnPoint(LaunchPad.name).spawnPointTransform.position);
+                    //LaunchPad.lon = FlightGlobals.Bodies[1].GetLongitude(LaunchPad.GetSpawnPoint(LaunchPad.name).spawnPointTransform.position);
+                    //LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(LaunchPad.GetSpawnPoint(LaunchPad.name).spawnPointTransform.position);
                     
                     //LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(cty.transform.position);
                     //this is redundant - pqsName == body
-                    LaunchPad.body = "Kerbin";
+                    //LaunchPad.body = "Kerbin";
                     LogDebugOnly("End LaunchPad setup");
                     LaunchSiteExt Runway = new LaunchSiteExt();
                     Runway.description = "The Runway!";
@@ -105,10 +105,10 @@ namespace KSPRemoteLaunch
                     //Runway.facilityPQS.SetTarget(Runway.spawnPoints[0].spawnPointTransform);
                     Runway.facilityPQS.SetTarget(Runway.GetSpawnPoint(Runway.name).spawnPointTransform);
                     //PSystemSetup.Instance.SetPQSActive(Runway.facilityPQS);
-                    Runway.lon = FlightGlobals.Bodies[1].GetLongitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
-                    Runway.lat = FlightGlobals.Bodies[1].GetLatitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
+                    //Runway.lon = FlightGlobals.Bodies[1].GetLongitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
+                    //Runway.lat = FlightGlobals.Bodies[1].GetLatitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
                     //PSystemSetup.Instance.SetPQSInactive();
-                    Runway.body = "Kerbin";
+                    //Runway.body = "Kerbin";
 
                     LogDebugOnly("Sites Created");
                     //sites[0] = LaunchPad;
@@ -169,7 +169,7 @@ namespace KSPRemoteLaunch
                 site.AddValue("Name", saveSite.name);
                 site.AddValue("Lat", saveSite.lat);
                 site.AddValue("Lon", saveSite.lon);
-                site.AddValue("Body", saveSite.body);
+                site.AddValue("Body", saveSite.pqsName);
                 site.AddValue("Description", saveSite.description);
                 launchSiteSave.AddNode(site);
             }
@@ -207,7 +207,7 @@ namespace KSPRemoteLaunch
                 confSite.SetValue("Name", site.name);
                 confSite.SetValue("Lat", site.lat.ToString());
                 confSite.SetValue("Lon", site.lon.ToString());
-                confSite.SetValue("Body", site.body);
+                confSite.SetValue("Body", site.pqsName);
                 confSite.SetValue("Description", site.description);
             }
             else
@@ -217,7 +217,7 @@ namespace KSPRemoteLaunch
                 confSite.AddValue("Name", site.name);
                 confSite.AddValue("Lat", site.lat);
                 confSite.AddValue("Lon", site.lon);
-                confSite.AddValue("Body", site.body);
+                confSite.AddValue("Body", site.pqsName);
                 confSite.AddValue("Description", site.description);
                 launchSiteLoad.AddNode(confSite);
             }
@@ -269,16 +269,17 @@ namespace KSPRemoteLaunch
 
         public static void updateLaunchSite(LaunchSiteExt site, string siteName,string description,string planet,double lat, double lon)
         {
+            LogDebugOnly("UpdateLaunchSite - Args: {0}, {1}, {2}, {3}, {4}, {5}",site.ToString(), siteName, description,planet,lat,lon);
             //make sure it exists before we try to edit it
             launchSites.Single<LaunchSiteExt>(l => l == site);
-
-            setValues(siteName, description, planet, lat, lon, site);
-
-            CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == site.body);
-
             
+            setValues(siteName, description, planet, lat, lon, site);
+            LogDebugOnly("Getting Celestial Body");
+            CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == site.pqsName);
 
-            Vector3 position = body.GetRelSurfaceNVector(site.lat, site.lon); //radial vector indicating position
+
+            LogDebugOnly("Getting Position");
+            Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
             double altitude = body.pqsController.GetSurfaceHeight(position) - body.Radius;
 
             Vector3 orientation = Vector3.up;
@@ -492,9 +493,9 @@ namespace KSPRemoteLaunch
             }
 
             site.name = newName;
-            site.lat = newLat;
-            site.lon = newLon;
-            site.body = newBody;
+            //site.lat = newLat;
+            //site.lon = newLon;
+            //site.body = newBody;
             site.pqsName = newBody;
             site.description = newDesc;
             site.facilityTransformName = newName;
@@ -512,9 +513,36 @@ namespace KSPRemoteLaunch
     public class LaunchSiteExt : PSystemSetup.SpaceCenterFacility
     {
         public string description;
-        public double lat;
-        public double lon;
-        public string body;
+        
+        public double lat 
+        {
+            get 
+            {
+                CelestialBody currentBody = FlightGlobals.Bodies.SingleOrDefault<CelestialBody>(c => c.name == this.pqsName);
+                if (currentBody == null)
+                    return 0;
+
+                return currentBody.GetLatitude(this.GetSpawnPoint(this.name).spawnPointTransform.position); 
+            
+            }
+        }
+        
+
+        public double lon
+        {
+            get
+            {
+                CelestialBody currentBody = FlightGlobals.Bodies.SingleOrDefault<CelestialBody>(c => c.name == this.pqsName);
+                if (currentBody == null)
+                    return 0;
+
+                return currentBody.GetLongitude(this.GetSpawnPoint(this.name).spawnPointTransform.position);
+
+            }
+        }
+
+        //this is unnessessary
+        //public string body;
 
         
 

@@ -239,8 +239,8 @@ namespace KSPRemoteLaunch
         private void updateLaunchSite(LaunchSiteExt site)
         {
             LogDebugOnly("-------Begin Update----------");
-
-            LogDebugOnly(currentLaunchSite.name);
+            //causing bug? - null ref
+            //LogDebugOnly(currentLaunchSite.name);
 
             try
             {
@@ -253,7 +253,7 @@ namespace KSPRemoteLaunch
             catch (Exception e)
             {
                 //undo changes to GUI site details
-                planetText = site.body;
+                planetText = site.pqsName;
                 descText = site.description;
                 latText = site.lat.ToString();
                 lonText = site.lon.ToString();
@@ -275,7 +275,7 @@ namespace KSPRemoteLaunch
                 latText = site.lat.ToString();
                 lonText = site.lon.ToString();
                 launchText = site.name;
-                planetText = site.body;
+                planetText = site.pqsName;
 
                 //result = "Launch Site Loaded: '" + site.name + "'";
             }
