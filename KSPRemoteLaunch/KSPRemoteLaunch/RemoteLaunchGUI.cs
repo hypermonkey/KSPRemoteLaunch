@@ -245,7 +245,7 @@ namespace KSPRemoteLaunch
             try
             {
                 //will throw an exception if the new site is invalid
-                LaunchDriver.updateLaunchSite(site, launchText, descText, planetText, double.Parse(latText), double.Parse(lonText));
+                LaunchDriver.updateLaunchSite(site, launchText, descText, FlightGlobals.Bodies.Single<CelestialBody>(c=> c.name == planetText), double.Parse(latText), double.Parse(lonText));
                 SiteToggleList.setActiveButtonText(site.name);
                 //move this into update?
                 LaunchDriver.saveLaunchSite(site);

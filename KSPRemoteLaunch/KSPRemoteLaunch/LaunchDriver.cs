@@ -45,7 +45,8 @@ namespace KSPRemoteLaunch
                 {
                     PSystemSetup.SpaceCenterFacility[] sites = (PSystemSetup.SpaceCenterFacility[])fi.GetValue(PSystemSetup.Instance);
                     LogDebugOnly("Begin LaunchPad setup");
-                    LaunchSiteExt LaunchPad = new LaunchSiteExt();
+                    LaunchSiteExt LaunchPad = new LaunchSiteExt(sites[0],"The LaunchPad!", FlightGlobals.Bodies[1]);
+                    /*
                     LaunchPad.description = "The Launch Pad!";
                     //LaunchPad.launchPadName = sites[0].launchPadName;
                     LaunchPad.facilityTransformName = sites[0].facilityTransformName;
@@ -80,8 +81,10 @@ namespace KSPRemoteLaunch
                     //LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(cty.transform.position);
                     //this is redundant - pqsName == body
                     //LaunchPad.body = "Kerbin";
+                     */
                     LogDebugOnly("End LaunchPad setup");
-                    LaunchSiteExt Runway = new LaunchSiteExt();
+                    LaunchSiteExt Runway = new LaunchSiteExt(sites[1], "The Runway", FlightGlobals.Bodies[1]);
+                    /*
                     Runway.description = "The Runway!";
                     //Runway.launchPadName = sites[1].launchPadName;
                     Runway.facilityTransformName = sites[1].facilityTransformName;
@@ -109,7 +112,7 @@ namespace KSPRemoteLaunch
                     //Runway.lat = FlightGlobals.Bodies[1].GetLatitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
                     //PSystemSetup.Instance.SetPQSInactive();
                     //Runway.body = "Kerbin";
-
+                    */
                     LogDebugOnly("Sites Created");
                     //sites[0] = LaunchPad;
                     //sites[1] = Runway;
@@ -179,6 +182,7 @@ namespace KSPRemoteLaunch
 
         }
 
+        //this should be removed/replced with save all
         public static void saveLaunchSite(LaunchSiteExt site)
         {
             LogDebugOnly("Start Save");
@@ -204,15 +208,21 @@ namespace KSPRemoteLaunch
             if (confSite != null)
             {
                 //edit existing
+                //confSite = site.configNode;
+                confSite.ClearData();
+                confSite.AddData(site.configNode);
+                /*
                 confSite.SetValue("Name", site.name);
                 confSite.SetValue("Lat", site.lat.ToString());
                 confSite.SetValue("Lon", site.lon.ToString());
                 confSite.SetValue("Body", site.pqsName);
                 confSite.SetValue("Description", site.description);
+                 * */
             }
             else
             {
                 //add new
+                /*
                 confSite = new ConfigNode("LaunchSite");
                 confSite.AddValue("Name", site.name);
                 confSite.AddValue("Lat", site.lat);
@@ -220,7 +230,11 @@ namespace KSPRemoteLaunch
                 confSite.AddValue("Body", site.pqsName);
                 confSite.AddValue("Description", site.description);
                 launchSiteLoad.AddNode(confSite);
+                 */
+                launchSiteLoad.AddNode(site.configNode);
             }
+            LogDebugOnly("Saving To File...");
+            LogDebugOnly("Description: " + launchSiteLoad.GetNodes("LaunchSite").ToList<ConfigNode>().FirstOrDefault(conf => conf.GetValue("Name") == site.name).GetValue("Description"));
             launchSiteLoad.Save(SavePath + SaveFile);
         }
 
@@ -267,139 +281,24 @@ namespace KSPRemoteLaunch
             saveLaunchSites();
         }
 
-        public static void updateLaunchSite(LaunchSiteExt site, string siteName,string description,string planet,double lat, double lon)
+        public static void updateLaunchSite(LaunchSiteExt site, string siteName,string description,CelestialBody body,double lat, double lon)
         {
-            LogDebugOnly("UpdateLaunchSite - Args: {0}, {1}, {2}, {3}, {4}, {5}",site.ToString(), siteName, description,planet,lat,lon);
+            LogDebugOnly("UpdateLaunchSite - Args: {0}, {1}, {2}, {3}, {4}, {5}",site.ToString(), siteName, description,body.name,lat,lon);
             //make sure it exists before we try to edit it
             launchSites.Single<LaunchSiteExt>(l => l == site);
             
-            setValues(siteName, description, planet, lat, lon, site);
-            LogDebugOnly("Getting Celestial Body");
-            CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == site.pqsName);
+            checkValues(siteName, description, body, lat, lon, site);
 
-
-            LogDebugOnly("Getting Position");
-            Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
-            double altitude = body.pqsController.GetSurfaceHeight(position) - body.Radius;
-
-            Vector3 orientation = Vector3.up;
-            float rotation = 0; //Don't know how to work this out from vessel rotation.
-            float visibleRange = 5000;
-            
-            LogDebugOnly("Set location variables");
-            
-            PQSCity.LODRange range = new PQSCity.LODRange
-            {
-                renderers = new GameObject[0],
-                objects = new GameObject [0],
-                visibleRange = visibleRange
-            };
-
-            
-            PQSCity launchPQS;
-            launchPQS = site.facilityTransform.GetComponent<PQSCity>();
-            //launchPQS = site.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
-            //UnityEngine.Object.Destroy(launchPQS);
-            //launchPQS = site.launchPadTransform.parent.gameObject.AddComponent<PQSCity>();
-
-            LogDebugOnly("Added PQSCity to gameobject");
-            launchPQS.lod = new[] { range };
-            launchPQS.frameDelta = 1; //Unknown
-            launchPQS.repositionToSphere = false; //enable repositioning to sphere and use RadiusOffset as altitude
-            launchPQS.repositionToSphereSurface = true; //Snap to surface
-            launchPQS.repositionToSphereSurfaceAddHeight =true;//add RadiusOffset to surfaceHeight when using ToSphereSurface
-            launchPQS.repositionRadial = position; //position
-            launchPQS.repositionRadiusOffset = 100.0d; //height from surface
-            //launchPQS.repositionRadiusOffset = 1250.0d;//safety distance
-            launchPQS.reorientInitialUp = orientation; //orientation
-            launchPQS.reorientFinalAngle = rotation; //rotation x axis
-            launchPQS.reorientToSphere = true; //adjust rotations to match the direction of gravity
-            
-            LogDebugOnly("Set PQSCity variables");
-
-            //GameObject obj = site.launchPadTransform.parent.gameObject;
-            GameObject obj = site.facilityTransform.gameObject;
-            obj.name = site.name;
-            obj.transform.parent = body.pqsController.transform;
-
-
-            launchPQS.sphere = body.pqsController;
-            launchPQS.order = 100;
-            launchPQS.modEnabled = true;
-            launchPQS.OnSetup();
-            launchPQS.Orientate();
-            LogDebugOnly("Setup PQSCity");
-
-
-            MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupFacilities", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (updateSitesMI == null)
-            {
-                LogDebugOnly("Fail to find SetupLaunchSites().");
-                throw new Exception("Fatal Error - Can't find method SetupLaunchSites().");
-            }
-            else
-                updateSitesMI.Invoke(PSystemSetup.Instance, null);
-            
+            site.Update(lat, lon, body, siteName, description);
 
         }
 
         public static LaunchSiteExt CreateCustomLaunchSite(double lat, double lon, CelestialBody body, string siteName,string description)
         {
+            LogDebugOnly("Creating launch site: " + siteName);
             
-            LaunchSiteExt newSite = new LaunchSiteExt();
-            setValues(siteName, description, body.name, lat, lon, newSite);
-
-            GameObject obj;
-            GameObject g = new GameObject("VoidModel_spawn");//the actual transform used
-            obj = new GameObject(siteName);
-            g.GetComponent<Transform>().parent = obj.transform;
-            LogDebugOnly("Created gameobject");
-
-            Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
-            double altitude = body.pqsController.GetSurfaceHeight(position) - body.Radius;
-            string siteTransform = "VoidModel_spawn";
-
-            Vector3 orientation = Vector3.up;
-            float rotation = 0; //Don't know how to work this out from vessel rotation.
-            float visibleRange = 5000;
-            LogDebugOnly("Set location variables");
-
-            PQSCity.LODRange range = new PQSCity.LODRange
-            {
-                renderers = new GameObject[0],
-                objects = new GameObject [0],
-                visibleRange = visibleRange
-            };
-
-            PQSCity launchPQS;
-            
-            launchPQS = obj.AddComponent<PQSCity>(); //Adds a PQSCity to the game object - appears to put it into the PQS[] in PSystemSetup
-            LogDebugOnly("Added PQSCity to gameobject");
-            launchPQS.lod = new[] { range };
-            launchPQS.frameDelta = 2; //Unknown
-            launchPQS.repositionToSphere = false; //enable repositioning to sphere and use RadiusOffset as altitude
-            launchPQS.repositionToSphereSurface = true; //Snap to surface
-            launchPQS.repositionToSphereSurfaceAddHeight = true;//add RadiusOffset to surfaceHeight when using ToSphereSurface
-            launchPQS.repositionRadial = position; //position
-            launchPQS.repositionRadiusOffset = 100.0d;//altitude + 10.0d; //height from surface
-            //launchPQS.repositionRadiusOffset = 0.0d;//safety distance
-            launchPQS.reorientInitialUp = orientation; //orientation
-            launchPQS.reorientFinalAngle = rotation; //rotation x axis
-            launchPQS.reorientToSphere = true; //adjust rotations to match the direction of gravity
-            
-            LogDebugOnly("Set PQSCity variables");
-
-            obj.transform.parent = body.pqsController.transform;
-            launchPQS.sphere = body.pqsController;
-            launchPQS.order = 100;
-            launchPQS.modEnabled = true;
-            launchPQS.OnSetup();
-            launchPQS.Orientate();
-            LogDebugOnly("Setup PQSCity");
-
-            
-            LogDebugOnly("Creating custom launch site");
-            //PSystemSetup.LaunchSite newSite = null;
+            LaunchSiteExt newSite = new LaunchSiteExt(lat, lon, body, siteName, description);
+            checkValues(siteName, description, body, lat, lon,newSite);
             
             //this code is copied from kerbtown
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
@@ -408,24 +307,11 @@ namespace KSPRemoteLaunch
                 {
                     PSystemSetup.SpaceCenterFacility[] sites = (PSystemSetup.SpaceCenterFacility[])fi.GetValue(PSystemSetup.Instance);
                     
-                    //PSystemSetup.LaunchSite newSite = new PSystemSetup.LaunchSite();
-                    //newSite = new LaunchSiteExt();
-                    //newSite.launchPadName = siteName + "/" + siteTransform; //is siteTransform nessesary?
-                    //Debug.Log("Launch Pad Name: " + newSite.launchPadName);
-                    //newSite.name = siteName;
-                    //newSite.description = description;
-                    //newSite.pqsName = body.bodyName;
-                    //newSite.lat = lat;
-                    //newSite.lon = lon;
-                    //newSite.body = body.name;
                     Debug.Log("PQS Name: " + newSite.pqsName);
 
                     PSystemSetup.SpaceCenterFacility[] newSites = new PSystemSetup.SpaceCenterFacility[sites.Length + 1];
                     for (int i = 0; i < sites.Length; ++i)
                     {
-                        //Debug.Log("Org Name: " + sites[i].name);
-                        //Debug.Log("Org Launch Pad Name: " + sites[i].launchPadName);
-                        //Debug.Log("Org PQS Name: " + sites[i].pqsName);
                         newSites[i] = sites[i];
                     }
                     newSites[newSites.Length - 1] = (PSystemSetup.SpaceCenterFacility)newSite;
@@ -436,15 +322,7 @@ namespace KSPRemoteLaunch
                 }
             }
 
-            MethodInfo updateSitesMI = PSystemSetup.Instance.GetType().GetMethod("SetupFacilities", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (updateSitesMI == null)
-            {
-                LogDebugOnly("Fail to find SetupLaunchSites().");
-                throw new Exception("Fatal Error - Can't find method SetupLaunchSites().");
-            }
-            else
-                updateSitesMI.Invoke(PSystemSetup.Instance, null);
-
+            newSite.Setup();
             launchSites.Add(newSite);
             //SaveLaunchSite(newSite);
             return newSite;
@@ -458,18 +336,18 @@ namespace KSPRemoteLaunch
             return launchSites;
         }
 
-        private static void setValues(string newName, string newDesc, string newBody, double newLat, double newLon, LaunchSiteExt site)
+        private static void checkValues(string newName, string newDesc, CelestialBody newBody, double newLat, double newLon, LaunchSiteExt site)
         {
-
+            
             if (PSystemSetup.Instance.GetSpaceCenterFacility(newName) != null && site.name != newName)//logs 'Can not find launch site' to console when null
                 throw new Exception("Launch Site '" + newName + "' already exists");
-
+            
             //Can't use this on defualt launch sites
             if (site.name == "LaunchPad" || site.name == "Runway")
                 throw new Exception("Can't edit default launch sites!");
 
             //throws exception if a body is not found
-            CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == newBody);
+            CelestialBody body = FlightGlobals.Bodies.Single<CelestialBody>(b => b.name == newBody.name);
 
             //Check for Polar launch site - KSP has camera bug when vessel is directly above either pole.
             //Validity checks should be moved into LaunchSiteExt class
@@ -492,20 +370,6 @@ namespace KSPRemoteLaunch
                 throw new Exception("Failed to create/update Launch Site." + System.Environment.NewLine + "Can't set Launch Sites over water!");
             }
 
-            site.name = newName;
-            //site.lat = newLat;
-            //site.lon = newLon;
-            //site.body = newBody;
-            site.pqsName = newBody;
-            site.description = newDesc;
-            site.facilityTransformName = newName;
-            PSystemSetup.SpaceCenterFacility.SpawnPoint point = new PSystemSetup.SpaceCenterFacility.SpawnPoint();
-            point.name = newName;
-            point.spawnTransformURL = "VoidModel_spawn";
-            site.spawnPoints = new PSystemSetup.SpaceCenterFacility.SpawnPoint[] { point };
-
-            //site.launchPadName = newName + "/" + "VoidModel_spawn";
-
         }
 
     }
@@ -513,16 +377,17 @@ namespace KSPRemoteLaunch
     public class LaunchSiteExt : PSystemSetup.SpaceCenterFacility
     {
         public string description;
-        
+        private GameObject SiteObject;
+        private CelestialBody body;
+
         public double lat 
         {
             get 
             {
-                CelestialBody currentBody = FlightGlobals.Bodies.SingleOrDefault<CelestialBody>(c => c.name == this.pqsName);
-                if (currentBody == null)
+                if (body == null)
                     return 0;
-
-                return currentBody.GetLatitude(this.GetSpawnPoint(this.name).spawnPointTransform.position); 
+                
+                return body.GetLatitude(this.GetSpawnPoint(this.name).spawnPointTransform.position); 
             
             }
         }
@@ -532,19 +397,192 @@ namespace KSPRemoteLaunch
         {
             get
             {
-                CelestialBody currentBody = FlightGlobals.Bodies.SingleOrDefault<CelestialBody>(c => c.name == this.pqsName);
-                if (currentBody == null)
+                if (body == null)
                     return 0;
-
-                return currentBody.GetLongitude(this.GetSpawnPoint(this.name).spawnPointTransform.position);
-
+                return body.GetLongitude(this.GetSpawnPoint(this.name).spawnPointTransform.position);
             }
         }
 
-        //this is unnessessary
-        //public string body;
+        //private ConfigNode saveData = null;
+        public ConfigNode configNode
+        {
+            get
+            {
+                ConfigNode confSite = new ConfigNode("LaunchSite");
+                confSite.AddValue("Name", this.name);
+                confSite.AddValue("Lat", this.lat);
+                confSite.AddValue("Lon", this.lon);
+                confSite.AddValue("Body", this.pqsName);
+                confSite.AddValue("Description", this.description);
+                return confSite;
+            }
+        }
 
+        private void CreateLaunchSiteFromVars(double lat, double lon, CelestialBody body, string siteName, string description)
+        {
+            string siteTransform = "VoidModel_spawn";
+
+            this.name = siteName;
+            this.pqsName = body.name;
+            this.body = body;
+            this.description = description;
+            this.facilityTransformName = siteName;
+            PSystemSetup.SpaceCenterFacility.SpawnPoint point = new PSystemSetup.SpaceCenterFacility.SpawnPoint();
+            point.name = siteName;
+            point.spawnTransformURL = siteTransform;
+            this.spawnPoints = new PSystemSetup.SpaceCenterFacility.SpawnPoint[] { point };
+
+
+            GameObject g = new GameObject(siteTransform);//the actual transform used
+            SiteObject = new GameObject(siteName);
+            g.GetComponent<Transform>().parent = SiteObject.transform;
+
+            Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
+            Vector3 orientation = Vector3.up;
+            float rotation = 0; //Don't know how to work this out from vessel rotation.
+
+            PQSCity.LODRange range = new PQSCity.LODRange
+            {
+                renderers = new GameObject[0],
+                objects = new GameObject[0],
+                visibleRange = 5000.0f
+            };
+
+            PQSCity launchPQS;
+
+            launchPQS = SiteObject.AddComponent<PQSCity>(); //Adds a PQSCity to the game object - appears to put it into the PQS[] in PSystemSetup
+            launchPQS.lod = new[] { range };
+            launchPQS.frameDelta = 1; //Unknown
+            launchPQS.repositionToSphere = false; //enable repositioning to sphere and use RadiusOffset as altitude
+            launchPQS.repositionToSphereSurface = true; //Snap to surface
+            launchPQS.repositionToSphereSurfaceAddHeight = true;//add RadiusOffset to surfaceHeight when using ToSphereSurface
+            launchPQS.repositionRadial = position; //position
+            launchPQS.repositionRadiusOffset = 100.0d;//altitude + 10.0d; //height from surface
+            //launchPQS.repositionRadiusOffset = 0.0d;//safety distance
+            launchPQS.reorientInitialUp = orientation; //orientation
+            launchPQS.reorientFinalAngle = rotation; //rotation x axis
+            launchPQS.reorientToSphere = true; //adjust rotations to match the direction of gravity
+            
+        }
+
+        public LaunchSiteExt(double lat, double lon, CelestialBody body, string siteName, string description)
+        {
+            CreateLaunchSiteFromVars(lat, lon, body, siteName, description);
+        }
+
+        public LaunchSiteExt(PSystemSetup.SpaceCenterFacility oldLaunchSite, string description, CelestialBody body)
+        {
+            //dont create configNode?
+            this.description = description;
+            this.body = body;
+            this.SiteObject = oldLaunchSite.facilityTransform.gameObject;
+
+            this.facilityTransformName = oldLaunchSite.facilityTransformName;
+
+            this.facilityPQS = oldLaunchSite.facilityPQS;
+
+            this.facilityTransform = oldLaunchSite.facilityTransform;
+            this.facilityName = oldLaunchSite.facilityName;
+            this.spawnPoints = oldLaunchSite.spawnPoints;
+
+            this.name = oldLaunchSite.name;
+            this.pqsName = oldLaunchSite.pqsName;
+
+
+            this.facilityPQS.SetTarget(this.spawnPoints[0].spawnPointTransform);
+        }
         
+        
+
+        public LaunchSiteExt(ConfigNode configNode)
+        {
+            double lat = double.Parse(configNode.GetValue("Lat"));
+            double lon = double.Parse(configNode.GetValue("Lon"));
+            CelestialBody theBody = FlightGlobals.Bodies.Find(body => body.name == configNode.GetValue("Body"));
+            string siteName = configNode.GetValue("Name");
+            string desc = configNode.GetValue("Description");
+            CreateLaunchSiteFromVars(lat, lon,theBody, siteName, desc);
+        }
+
+
+        public void Setup()
+        {
+            SiteObject.transform.parent = body.pqsController.transform;
+            
+            PQSCity launchPQS;
+            launchPQS = SiteObject.GetComponent<PQSCity>();
+            Debug.Log("Got PQSCity");
+            launchPQS.sphere = body.pqsController;
+            launchPQS.order = 100;
+            launchPQS.modEnabled = true;
+            launchPQS.OnSetup();
+            launchPQS.Orientate();
+            
+            PQS[] pqs = { body.pqsController };
+            base.Setup(pqs);
+
+        }
+
+        public void Update(double lat, double lon, CelestialBody body, string siteName, string description)
+        {
+            
+            string siteTransform = "VoidModel_spawn";
+
+            //this needs DRYing
+            this.name = siteName;
+            this.pqsName = body.name;
+            this.body = body;
+            this.description = description;
+            this.facilityTransformName = siteName;
+            PSystemSetup.SpaceCenterFacility.SpawnPoint point = new PSystemSetup.SpaceCenterFacility.SpawnPoint();
+            point.name = siteName;
+            point.spawnTransformURL = siteTransform;
+            this.spawnPoints = new PSystemSetup.SpaceCenterFacility.SpawnPoint[] { point };
+
+            SiteObject.name = this.facilityTransform.gameObject.name;
+
+            Vector3 position = body.GetRelSurfaceNVector(lat, lon); //radial vector indicating position
+
+            Vector3 orientation = Vector3.up;
+            float rotation = 0; //Don't know how to work this out from vessel rotation.
+            float visibleRange = 5000;
+
+            PQSCity.LODRange range = new PQSCity.LODRange
+            {
+                renderers = new GameObject[0],
+                objects = new GameObject[0],
+                visibleRange = visibleRange
+            };
+
+
+            PQSCity launchPQS;
+            launchPQS = this.facilityTransform.GetComponent<PQSCity>();
+
+            //this needs DRYing
+            launchPQS.lod = new[] { range };
+            launchPQS.frameDelta = 1; //Unknown
+            launchPQS.repositionToSphere = false; //enable repositioning to sphere and use RadiusOffset as altitude
+            launchPQS.repositionToSphereSurface = true; //Snap to surface
+            launchPQS.repositionToSphereSurfaceAddHeight = true;//add RadiusOffset to surfaceHeight when using ToSphereSurface
+            launchPQS.repositionRadial = position; //position
+            launchPQS.repositionRadiusOffset = 100.0d; //height from surface
+            //launchPQS.repositionRadiusOffset = 1250.0d;//safety distance
+            launchPQS.reorientInitialUp = orientation; //orientation
+            launchPQS.reorientFinalAngle = rotation; //rotation x axis
+            launchPQS.reorientToSphere = true; //adjust rotations to match the direction of gravity
+
+            Setup();
+        }
+
+        public void Delete()
+        {
+            throw new NotImplementedException("NotImplamentedException -> LaunchSiteExt:Update");
+        }
+
+        private void SetupPQSCity(PQSCity pqs, double lat, double lon, CelestialBody body)
+        {
+            throw new NotImplementedException("NotImplamentedException -> LaunchSiteExt:SetupPQSCity");
+        }
 
     }
 
