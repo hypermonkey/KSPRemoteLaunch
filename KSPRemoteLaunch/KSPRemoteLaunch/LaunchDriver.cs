@@ -10,7 +10,7 @@ namespace KSPRemoteLaunch
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     public class LaunchDriver:MonoBehaviourExtended
     {
-        private static string SavePath = "";//KSPUtil.ApplicationRootPath + "/saves/" + HighLogic.SaveFolder + "/";
+        private static string SavePath = "";
         private static string SaveFile = "Persistent-LaunchSites.sfs";
         private static List<LaunchSiteExt> launchSites = new List<LaunchSiteExt>();
 
@@ -27,6 +27,7 @@ namespace KSPRemoteLaunch
         {
             
             LogDebugOnly("---Launch Driver Start---");
+            //We don't want to reload every time the user goes to the SpaceCentre scene??
             if (!hasLoadedGameChanged())
             {
                 
@@ -36,9 +37,8 @@ namespace KSPRemoteLaunch
             SavePath = KSPUtil.ApplicationRootPath + "/saves/" + HighLogic.SaveFolder + "/";
 
             launchSites = new List<LaunchSiteExt>();
-            //if (!firstTime)
-            //    return;
-            //change default launch sites to extended version?
+
+            //change default launch sites to extended version
             foreach (FieldInfo fi in PSystemSetup.Instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 if (fi.FieldType.Name == "SpaceCenterFacility[]")
@@ -46,73 +46,10 @@ namespace KSPRemoteLaunch
                     PSystemSetup.SpaceCenterFacility[] sites = (PSystemSetup.SpaceCenterFacility[])fi.GetValue(PSystemSetup.Instance);
                     LogDebugOnly("Begin LaunchPad setup");
                     LaunchSiteExt LaunchPad = new LaunchSiteExt(sites[0],"The LaunchPad!", FlightGlobals.Bodies[1]);
-                    /*
-                    LaunchPad.description = "The Launch Pad!";
-                    //LaunchPad.launchPadName = sites[0].launchPadName;
-                    LaunchPad.facilityTransformName = sites[0].facilityTransformName;
-
-                    //LaunchPad.launchPadPQS = sites[0].launchPadPQS;
-                    LaunchPad.facilityPQS = sites[0].facilityPQS;
-
-                    //LaunchPad.launchPadTransform = sites[0].launchPadTransform;
-                    LaunchPad.facilityTransform = sites[0].facilityTransform;
-                    LaunchPad.facilityName = sites[0].facilityName;
-                    LaunchPad.spawnPoints = sites[0].spawnPoints;
-
-                    LaunchPad.name = sites[0].name;
-                    LaunchPad.pqsName = sites[0].pqsName;
                     
-
-                    //PQSCity cty = LaunchPad.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
-                    //cty = LaunchPad.launchPadTransform.localPosition
-                    //LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
-                    //LaunchPad.launchPadPQS.SetTarget(LaunchPad.launchPadTransform);
-                    LaunchPad.facilityPQS.SetTarget(LaunchPad.spawnPoints[0].spawnPointTransform);
-
-                    //PSystemSetup.Instance.SetPQSActive(LaunchPad.launchPadPQS);
-                    //PSystemSetup.Instance.SetPQSActive(LaunchPad.facilityPQS);
-
-                    //LogDebugOnly(FlightGlobals.Bodies[1].GetLongitude(LaunchPad.launchPadTransform.position).ToString());
-                    //cty.Orientate();
-
-                    //LaunchPad.lon = FlightGlobals.Bodies[1].GetLongitude(LaunchPad.GetSpawnPoint(LaunchPad.name).spawnPointTransform.position);
-                    //LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(LaunchPad.GetSpawnPoint(LaunchPad.name).spawnPointTransform.position);
-                    
-                    //LaunchPad.lat = FlightGlobals.Bodies[1].GetLatitude(cty.transform.position);
-                    //this is redundant - pqsName == body
-                    //LaunchPad.body = "Kerbin";
-                     */
                     LogDebugOnly("End LaunchPad setup");
                     LaunchSiteExt Runway = new LaunchSiteExt(sites[1], "The Runway", FlightGlobals.Bodies[1]);
-                    /*
-                    Runway.description = "The Runway!";
-                    //Runway.launchPadName = sites[1].launchPadName;
-                    Runway.facilityTransformName = sites[1].facilityTransformName;
-
-                    //Runway.launchPadPQS = sites[1].launchPadPQS;
-                    Runway.facilityPQS = sites[1].facilityPQS;
-
-                    //Runway.launchPadTransform = sites[1].launchPadTransform;
-                    Runway.facilityTransform = sites[1].facilityTransform;
-                    Runway.facilityName = sites[1].facilityName;
-                    Runway.spawnPoints = sites[1].spawnPoints;
-
-                    Runway.name = sites[1].name;
-                    Runway.pqsName = sites[1].pqsName;
-
-                    //cty = Runway.launchPadTransform.parent.gameObject.GetComponent<PQSCity>();
-                    //cty.Orientate();
-                    //Runway.lon = FlightGlobals.Bodies[1].GetLongitude(cty.transform.position);
-                    //Runway.lat = FlightGlobals.Bodies[1].GetLatitude(cty.transform.position);
-
-                    //Runway.facilityPQS.SetTarget(Runway.spawnPoints[0].spawnPointTransform);
-                    Runway.facilityPQS.SetTarget(Runway.GetSpawnPoint(Runway.name).spawnPointTransform);
-                    //PSystemSetup.Instance.SetPQSActive(Runway.facilityPQS);
-                    //Runway.lon = FlightGlobals.Bodies[1].GetLongitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
-                    //Runway.lat = FlightGlobals.Bodies[1].GetLatitude(Runway.GetSpawnPoint(Runway.name).spawnPointTransform.position);
-                    //PSystemSetup.Instance.SetPQSInactive();
-                    //Runway.body = "Kerbin";
-                    */
+                    
                     LogDebugOnly("Sites Created");
                     //sites[0] = LaunchPad;
                     //sites[1] = Runway;
@@ -182,7 +119,7 @@ namespace KSPRemoteLaunch
 
         }
 
-        //this should be removed/replced with save all
+        //this should be removed/replced with save all - as it is effectivly the equivilant? - it does preserve user edits though, but it wont load them
         public static void saveLaunchSite(LaunchSiteExt site)
         {
             LogDebugOnly("Start Save");
@@ -207,30 +144,11 @@ namespace KSPRemoteLaunch
             ConfigNode confSite = launchSiteLoad.GetNodes("LaunchSite").ToList<ConfigNode>().FirstOrDefault(conf => conf.GetValue("Name") == site.name);
             if (confSite != null)
             {
-                //edit existing
-                //confSite = site.configNode;
                 confSite.ClearData();
                 confSite.AddData(site.configNode);
-                /*
-                confSite.SetValue("Name", site.name);
-                confSite.SetValue("Lat", site.lat.ToString());
-                confSite.SetValue("Lon", site.lon.ToString());
-                confSite.SetValue("Body", site.pqsName);
-                confSite.SetValue("Description", site.description);
-                 * */
             }
             else
             {
-                //add new
-                /*
-                confSite = new ConfigNode("LaunchSite");
-                confSite.AddValue("Name", site.name);
-                confSite.AddValue("Lat", site.lat);
-                confSite.AddValue("Lon", site.lon);
-                confSite.AddValue("Body", site.pqsName);
-                confSite.AddValue("Description", site.description);
-                launchSiteLoad.AddNode(confSite);
-                 */
                 launchSiteLoad.AddNode(site.configNode);
             }
             LogDebugOnly("Saving To File...");
@@ -281,14 +199,15 @@ namespace KSPRemoteLaunch
             saveLaunchSites();
         }
 
+        //This is redundant - get rid!
         public static void updateLaunchSite(LaunchSiteExt site, string siteName,string description,CelestialBody body,double lat, double lon)
         {
             LogDebugOnly("UpdateLaunchSite - Args: {0}, {1}, {2}, {3}, {4}, {5}",site.ToString(), siteName, description,body.name,lat,lon);
             //make sure it exists before we try to edit it
             launchSites.Single<LaunchSiteExt>(l => l == site);
-            
+            //this should be moved out of here?
             checkValues(siteName, description, body, lat, lon, site);
-
+            //this should be called by the controller - not in here
             site.Update(lat, lon, body, siteName, description);
 
         }
@@ -470,9 +389,15 @@ namespace KSPRemoteLaunch
             CreateLaunchSiteFromVars(lat, lon, body, siteName, description);
         }
 
+        /// <summary>
+        /// Convert base class object to LaunchSiteExt class object
+        /// </summary>
+        /// <param name="oldLaunchSite"></param>
+        /// <param name="description"></param>
+        /// <param name="body"></param>
         public LaunchSiteExt(PSystemSetup.SpaceCenterFacility oldLaunchSite, string description, CelestialBody body)
         {
-            //dont create configNode?
+            //dont need body - we can work this out?
             this.description = description;
             this.body = body;
             this.SiteObject = oldLaunchSite.facilityTransform.gameObject;
@@ -493,7 +418,16 @@ namespace KSPRemoteLaunch
         }
         
         
-
+        /// <summary>
+        /// Create a launch site from a Config Node - used for loading saved launch sites
+        /// </summary>
+        /// <param name="configNode">The Config Node to use
+        /// Format:
+        /// Lat - The Latitude of the Launch Site
+        /// Lon - The Longitude of the Launch Site
+        /// Body - The name of the planet/moon
+        /// Name - Name of the Launch Site
+        /// Description - A description of the Launch Site</param>
         public LaunchSiteExt(ConfigNode configNode)
         {
             double lat = double.Parse(configNode.GetValue("Lat"));
@@ -504,7 +438,10 @@ namespace KSPRemoteLaunch
             CreateLaunchSiteFromVars(lat, lon,theBody, siteName, desc);
         }
 
-
+        
+        /// <summary>
+        /// Connect Launch Site to the rest of the games objects and enable it to be used
+        /// </summary>
         public void Setup()
         {
             SiteObject.transform.parent = body.pqsController.transform;
