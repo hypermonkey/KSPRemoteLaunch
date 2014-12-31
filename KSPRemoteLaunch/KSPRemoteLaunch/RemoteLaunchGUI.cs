@@ -161,7 +161,8 @@ namespace KSPRemoteLaunch
                     
                     //PSystemSetup.LaunchSite newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, FlightGlobals.Bodies[1], launchText,descText);
                     CelestialBody planet = FlightGlobals.Bodies.Single<CelestialBody>(body => body.name == planetText);
-                    LaunchSiteExt newSite = LaunchDriver.CreateCustomLaunchSite(lat, lon, planet, launchText, descText);
+                    LaunchSiteExt newSite = new LaunchSiteExt(lat, lon, planet, launchText, descText);
+                    LaunchDriver.AddLaunchSiteExt(newSite);
 
                     //result = "Site '" + launchText + "' created!";
                     //result = String.Format("Site '{0}' created @ Lat: {1} , Lon: {2}", launchText, lat, lon);
@@ -245,7 +246,9 @@ namespace KSPRemoteLaunch
             try
             {
                 //will throw an exception if the new site is invalid
-                LaunchDriver.updateLaunchSite(site, launchText, descText, FlightGlobals.Bodies.Single<CelestialBody>(c=> c.name == planetText), double.Parse(latText), double.Parse(lonText));
+                LaunchDriver.checkValues(launchText, descText, FlightGlobals.Bodies.Single<CelestialBody>(c => c.name == planetText), double.Parse(latText), double.Parse(lonText), site);
+                site.Update(double.Parse(latText), double.Parse(lonText), FlightGlobals.Bodies.Single<CelestialBody>(c => c.name == planetText),launchText, descText);
+                //LaunchDriver.updateLaunchSite(site, launchText, descText, FlightGlobals.Bodies.Single<CelestialBody>(c=> c.name == planetText), double.Parse(latText), double.Parse(lonText));
                 SiteToggleList.setActiveButtonText(site.name);
                 //move this into update?
                 LaunchDriver.saveLaunchSite(site);
@@ -332,6 +335,7 @@ namespace KSPRemoteLaunch
                     {
                         try
                         {
+                            LogDebugOnly("Delete Clicked");
                             LaunchDriver.deleteLaunchSite(site);
                         }
                         catch (Exception e)
@@ -357,6 +361,7 @@ namespace KSPRemoteLaunch
                     {
                         try
                         {
+                            LogDebugOnly("Delete Clicked");
                             LaunchDriver.deleteLaunchSite(site);
                         }
                         catch (Exception e)

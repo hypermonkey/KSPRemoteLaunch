@@ -98,7 +98,6 @@ namespace KSPRemoteLaunch
             private bool enabled = false;
             private onSelected selectedAction;
             private onDelete deleteAction;
-            private onDelete delAction;
             private onUpdate updateAction;
 
             public string Text
@@ -121,7 +120,7 @@ namespace KSPRemoteLaunch
                 // TODO: Complete member initialization
                 this.GUIText = text;
                 this.selectedAction = action;
-                this.delAction = delAction;
+                this.deleteAction = delAction;
                 this.updateAction = updateAction;
             }
 
